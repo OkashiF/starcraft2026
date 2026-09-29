@@ -192,7 +192,7 @@ StarAbyss.Campaigns = {
         name: '难民车队',
         subtitle: '峡谷撤离线',
         briefing:
-            '<strong>目标：</strong> 3 辆难民运输车正穿过峡谷。<br><br>' +
+            '<strong>目标：</strong> 3 辆难民运输车正穿过峡谷，沿途接应三处难民营的幸存者。<br><br>' +
             '护送它们抵达星门撤离区。至少 1 辆存活至终点即算成功，全部损失则任务失败。<br><br>' +
             '<span style="color: var(--accent);">⚠️ 若超时（10 分钟）未抵达，星门将关闭。</span>',
 
@@ -213,18 +213,19 @@ StarAbyss.Campaigns = {
             { type: 'tank',   dx: -60, dy: 140 },
         ],
 
-        // 车队自身在场景生成，作为中立建筑
+        // 车队：W 形路线，途经 3 处难民营，每处停留 10 秒
         convoy: {
             count: 3,
             startX: 500,
             startY: 1200,
             dx: 80,
-            speed: 10,
+            speed: 15,
+            hp: 400,
             waypoints: [
-                { x: 900,  y: 1200 },
-                { x: 1400, y: 900  },
-                { x: 1800, y: 1000 },
-                { x: 2100, y: 1200 }, // 终点 = zone
+                { x: 700,  y: 400,  dwell: 10, label: '西北高地难民营' }, // 
+                { x: 1200, y: 2100, dwell: 10, label: '南部深谷矿区' },   // 
+                { x: 1800, y: 400,  dwell: 10, label: '东北高地据点' },   // 
+                { x: 2100, y: 1200 },                                    // （终点 = zone）
             ],
         },
 
@@ -232,13 +233,14 @@ StarAbyss.Campaigns = {
             { id: 'exit_gate', shape: 'circle', x: 2100, y: 1200, r: 160, label: '星门撤离区', color: 0x00ff88 },
         ],
 
+        // 护送关：所有波次均让敌人主动追击车队
         waves: [
-            { count: 6,  types: ['zergling'], interval: 10 },
-            { count: 10, types: ['zergling', 'hydralisk'], interval: 15 },
-            { count: 16, types: ['hydralisk'], interval: 15 },
-            { count: 18, types: ['zergling', 'hydralisk'], interval: 15 },
-            { count: 22, types: ['ultralisk'], interval: 20 },
-            { count: 28, types: ['zergling', 'hydralisk', 'ultralisk'], interval: 25 },
+            { count: 6,  types: ['zergling'], interval: 10, priority: 'protect' },
+            { count: 10, types: ['zergling', 'hydralisk'], interval: 15, priority: 'protect' },
+            { count: 16, types: ['hydralisk'], interval: 15, priority: 'protect' },
+            { count: 18, types: ['zergling', 'hydralisk'], interval: 15, priority: 'protect' },
+            { count: 22, types: ['ultralisk'], interval: 20, priority: 'protect' },
+            { count: 28, types: ['zergling', 'hydralisk', 'ultralisk'], interval: 25, priority: 'protect' },
         ],
 
         objectives: [
@@ -298,15 +300,16 @@ StarAbyss.Campaigns = {
             { type: 'tank',   dx: 80,  dy: 140 },
         ],
 
+        // 坚守关：前 3 波普通索敌，第 4 波起敌人主动扑向信标
         waves: [
             { count: 16,  types: ['zergling'],                           interval: 45 },
             { count: 24, types: ['zergling', 'hydralisk'],              interval: 45 },
             { count: 34, types: ['hydralisk'],                          interval: 42 },
-            { count: 48, types: ['zergling', 'hydralisk'],              interval: 40 },
-            { count: 52, types: ['zergling', 'hydralisk', 'ultralisk'], interval: 38 },
-            { count: 64, types: ['hydralisk', 'ultralisk'],             interval: 35 },
-            { count: 76, types: ['zergling', 'hydralisk', 'ultralisk'], interval: 32 },
-            { count: 80, types: ['ultralisk', 'hydralisk'],             interval: 30 },
+            { count: 48, types: ['zergling', 'hydralisk'],              interval: 40, priority: 'protect' },
+            { count: 52, types: ['zergling', 'hydralisk', 'ultralisk'], interval: 38, priority: 'protect' },
+            { count: 64, types: ['hydralisk', 'ultralisk'],             interval: 35, priority: 'protect' },
+            { count: 76, types: ['zergling', 'hydralisk', 'ultralisk'], interval: 32, priority: 'protect' },
+            { count: 80, types: ['ultralisk', 'hydralisk'],             interval: 30, priority: 'protect' },
         ],
 
         objectives: [

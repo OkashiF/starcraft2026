@@ -157,6 +157,10 @@ StarAbyss.MainScene = class extends Phaser.Scene {
             c.tags = ['convoy'];
             c.waypoints = cfg.waypoints.slice();
             c.wpIndex = 0;
+            // 途经点停留状态
+            c.dwelling = false;
+            c.dwellElapsed = 0;
+            c.dwellDuration = 0;
             c.setCollideWorldBounds(true);
             this.convoyUnits.add(c);
         }
@@ -166,10 +170,37 @@ StarAbyss.MainScene = class extends Phaser.Scene {
         if (!this.convoyUnits) return;
         this.convoyUnits.getChildren().forEach(c => {
             if (!c.active || c.hp <= 0) return;
+
+            // ===== 停留中：倒计时结束再前进 =====
+            if (c.dwelling) {
+                c.setVelocity(0, 0);
+                c.dwellElapsed += delta / 1000;
+                if (c.dwellElapsed >= c.dwellDuration) {
+                    c.dwelling = false;
+                    c.dwellElapsed = 0;
+                    c.dwellDuration = 0;
+                    c.wpIndex++;
+                }
+                return;
+            }
+
             if (c.wpIndex >= c.waypoints.length) { c.setVelocity(0, 0); return; }
             const wp = c.waypoints[c.wpIndex];
             const d = Phaser.Math.Distance.Between(c.x, c.y, wp.x, wp.y);
-            if (d < 24) { c.wpIndex++; return; }
+
+            if (d < 24) {
+                // 到达途经点：若配置了 dwell，则原地停留
+                if (wp.dwell && wp.dwell > 0) {
+                    c.dwelling = true;
+                    c.dwellElapsed = 0;
+                    c.dwellDuration = wp.dwell;
+                    c.setVelocity(0, 0);
+                    return;
+                }
+                c.wpIndex++;
+                return;
+            }
+
             this.physics.moveTo(c, wp.x, wp.y, c.speed);
             c.rotation = Phaser.Math.Angle.Between(c.x, c.y, wp.x, wp.y);
         });

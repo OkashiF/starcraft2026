@@ -208,6 +208,13 @@ StarAbyss.Ark = {
         StarAbyss.State.totalCores -= cost;
         dept.nodes[nodeId] = currentLv + 1;
 
+        // ===== 旧科技迁入：同步到 State.upgrades =====
+        // entities.js 读 infantryHp / mechAtk，wave.js 读 economy
+        if (nodeDef.legacyKey) {
+            StarAbyss.State.upgrades[nodeDef.legacyKey] = dept.nodes[nodeId];
+        }
+        // ============================================
+
         // 解锁卡牌
         if (nodeDef.unlocks && nodeDef.unlocks.cards) {
             nodeDef.unlocks.cards.forEach(cardId => {

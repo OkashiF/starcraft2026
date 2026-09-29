@@ -3,11 +3,6 @@ window.StarAbyss = window.StarAbyss || {};
 
 StarAbyss.ArkData = {
     // ===== 方舟部门定义 =====
-    // 每个部门：
-    //   id / name / icon / desc
-    //   maxLevel / upgradeCost
-    //   bonusPerLevel: 部门每级直接提供的全局加成
-    //   upgrades: 多升级节点，每个节点可独立升级
     DEPARTMENTS: {
         bridge: {
             id: 'bridge',
@@ -57,6 +52,37 @@ StarAbyss.ArkData = {
                     requires: { deptLevel: 1 },
                     unlocks: { cards: ['unit_ghost'] }
                 },
+                // ===== 旧科技迁入 =====
+                // legacyKey: 升级时同步写入 State.upgrades[key]
+                // 效果由 entities.js / wave.js 直接读取 State.upgrades 应用
+                {
+                    id: 'node_infantryHp',
+                    name: '单兵复合装甲',
+                    desc: '步兵单位生命值提升。每级 +15 HP。',
+                    maxLevel: 3,
+                    cost: [2, 5, 10],
+                    requires: { deptLevel: 1 },
+                    legacyKey: 'infantryHp'
+                },
+                {
+                    id: 'node_mechAtk',
+                    name: '机甲火控系统',
+                    desc: '机甲单位攻击力提升。每级 +10 伤害。',
+                    maxLevel: 3,
+                    cost: [2, 5, 10],
+                    requires: { deptLevel: 1 },
+                    legacyKey: 'mechAtk'
+                },
+                {
+                    id: 'node_economy',
+                    name: '自动化精炼厂',
+                    desc: '资源采集效率提升。每级 +4 晶矿 / +2 瓦斯每秒。',
+                    maxLevel: 3,
+                    cost: [2, 5, 10],
+                    requires: { deptLevel: 1 },
+                    legacyKey: 'economy'
+                },
+                // ===== 旧科技迁入结束 =====
                 {
                     id: 'unlock_tank',
                     name: '兵种档案：攻城坦克',
@@ -199,12 +225,6 @@ StarAbyss.ArkData = {
     },
 
     // ===== 卡牌定义 =====
-    // type: unit / building / skill
-    // buildKey: 对应 Config.UNITS / Config.BUILDINGS 的 key
-    // skillKey: 对应 Config.SKILLS 的 key
-    // slotCost: 占用装载格
-    // defaultUnlocked: 初始是否解锁
-    // unlockBy: 由哪个部门节点解锁，格式 "deptId.nodeId"
     CARDS: {
         unit_marine: {
             id: 'unit_marine',

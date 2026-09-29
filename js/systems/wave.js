@@ -72,6 +72,8 @@ StarAbyss.WaveSystem = class {
         const WS = StarAbyss.Config.WAVE_SPAWN;
         const count = waveCfg.count;
         const types = waveCfg.types;
+        // 本波敌人的攻击优先级：'default' / 'protect' / 'base'
+        const priority = waveCfg.priority || 'default';
 
         for (let i = 0; i < count; i++) {
             const edge = Math.floor(Math.random() * 4);
@@ -83,7 +85,9 @@ StarAbyss.WaveSystem = class {
             scene.unitFactory.spawnEnemy(
                 type,
                 ex + Math.random() * WS.JITTER,
-                ey + Math.random() * WS.JITTER
+                ey + Math.random() * WS.JITTER,
+                null,          // tags
+                priority       // 攻击优先级
             );
         }
 

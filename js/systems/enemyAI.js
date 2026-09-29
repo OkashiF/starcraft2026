@@ -23,31 +23,99 @@ StarAbyss.EnemyAISystem = class {
         }
 
         scene.enemyUnits.getChildren().forEach(enemy => {
-	    if (enemy.isEnemyBuilding) return;   // 跳过敌方建筑
-            let target = scene.commandCenter;
-            let targetType = 'base';
-            let targetDist = target ? Phaser.Math.Distance.Between(enemy.x, enemy.y, target.x, target.y) : Infinity;
+            if (enemy.isEnemyBuilding) return;   // 跳过敌方建筑
 
-            // 优先攻击附近友军单位
-            scene.friendlyUnits.getChildren().forEach(u => {
-                const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, u.x, u.y);
-                if (d < 120 && d < targetDist) {
-                    target = u;
-                    targetType = 'unit';
-                    targetDist = d;
-                }
-            });
+            const priority = enemy.attackPriority || 'default';
 
-            // 其次攻击保护目标（在附近时优先于基地）
-            protectTargets.forEach(t => {
-                if (!t.active || t.hp <= 0) return;
-                const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, t.x, t.y);
-                if (d < 200 && d < targetDist) {
-                    target = t;
-                    targetType = 'protect';
-                    targetDist = d;
+            let target = null;
+            let targetType = null;
+            let targetDist = Infinity;
+
+            if (priority === 'protect') {
+                // 保护目标优先：无视距离扑向最近的保护目标
+                protectTargets.forEach(t => {
+                    if (!t.active || t.hp <= 0) return;
+                    const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, t.x, t.y);
+                    if (d < targetDist) {
+                        target = t;
+                        targetType = 'protect';
+                        targetDist = d;
+                    }
+                });
+
+                // 极近距离友军转火（120px）
+                scene.friendlyUnits.getChildren().forEach(u => {
+                    const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, u.x, u.y);
+                    if (d < 120 && d < targetDist) {
+                        target = u;
+                        targetType = 'unit';
+                        targetDist = d;
+                    }
+                });
+
+                // 没有保护目标时回落到基地
+                if (!target) {
+                    target = scene.commandCenter;
+                    targetType = 'base';
+                    targetDist = target
+                        ? Phaser.Math.Distance.Between(enemy.x, enemy.y, target.x, target.y)
+                        : Infinity;
                 }
-            });
+            } else if (priority === 'base') {
+                // 基地优先：无视距离扑向指挥中心
+                target = scene.commandCenter;
+                targetType = 'base';
+                targetDist = target
+                    ? Phaser.Math.Distance.Between(enemy.x, enemy.y, target.x, target.y)
+                    : Infinity;
+
+                // 极近距离友军 / 保护目标转火（120px）
+                scene.friendlyUnits.getChildren().forEach(u => {
+                    const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, u.x, u.y);
+                    if (d < 120 && d < targetDist) {
+                        target = u;
+                        targetType = 'unit';
+                        targetDist = d;
+                    }
+                });
+                protectTargets.forEach(t => {
+                    if (!t.active || t.hp <= 0) return;
+                    const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, t.x, t.y);
+                    if (d < 120 && d < targetDist) {
+                        target = t;
+                        targetType = 'protect';
+                        targetDist = d;
+                    }
+                });
+            } else {
+                // default：保持原有行为
+                target = scene.commandCenter;
+                targetType = 'base';
+                targetDist = target
+                    ? Phaser.Math.Distance.Between(enemy.x, enemy.y, target.x, target.y)
+                    : Infinity;
+
+                // 优先攻击附近友军单位
+                scene.friendlyUnits.getChildren().forEach(u => {
+                    const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, u.x, u.y);
+                    if (d < 120 && d < targetDist) {
+                        target = u;
+                        targetType = 'unit';
+                        targetDist = d;
+                    }
+                });
+
+                // 其次攻击保护目标（在附近时优先于基地）
+                protectTargets.forEach(t => {
+                    if (!t.active || t.hp <= 0) return;
+                    const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, t.x, t.y);
+                    if (d < 200 && d < targetDist) {
+                        target = t;
+                        targetType = 'protect';
+                        targetDist = d;
+                    }
+                });
+            }
 
             if (!target) return;
 

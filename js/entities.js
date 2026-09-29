@@ -63,7 +63,8 @@ StarAbyss.UnitFactory = class {
         return unit;
     }
 
-    spawnEnemy(type, x, y, tags = null) {
+    // priority: 'default' | 'protect' | 'base'，控制该敌人的索敌策略
+    spawnEnemy(type, x, y, tags = null, priority = 'default') {
         const scene = this.scene;
         const def = StarAbyss.Config.ENEMIES[type];
         if (!def) return null;
@@ -82,6 +83,9 @@ StarAbyss.UnitFactory = class {
 
         // tags 用于 destroy_target 目标统计
         enemy.tags = tags ? tags.slice() : (def.tags ? def.tags.slice() : []);
+
+        // 攻击优先级（按波次写入）
+        enemy.attackPriority = priority || 'default';
 
         return enemy;
     }
