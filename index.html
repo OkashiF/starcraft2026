@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>星渊黎明 (Dawn of the Abyss) - RTS 完整版</title>
+    <link rel="icon" type="image/svg+xml" href="logo.png">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body oncontextmenu="return false;">
+
+    <div id="game-container"></div>
+    <div id="damage-overlay"></div>
+    <div id="toast-container"></div>
+
+    <!-- 战役内对话浮层 -->
+    <div id="dialogue-overlay" style="display:none;">
+        <div class="dialogue-box">
+            <div class="dialogue-speaker" id="dialogue-speaker">副官</div>
+            <div class="dialogue-text" id="dialogue-text"></div>
+        </div>
+    </div>
+
+    <!-- 方舟主菜单层 -->
+    <div id="main-menu">
+        <div class="menu-title">星 渊 黎 明</div>
+        <div class="menu-subtitle">Dawn of the Abyss - 远征军方舟指挥枢纽</div>
+        <div class="menu-container">
+            <div class="menu-panel">
+                <h2>🛰️ 星区战役导航</h2>
+                <div id="mission-list" class="mission-list"></div>
+            </div>
+
+            <div class="menu-panel">
+                <h2>
+                    <span>🎴 战前装载</span>
+                    <span style="font-size: 15px; color: var(--accent);">核心库存: <span id="menu-total-cores" style="font-size: 22px; font-weight: bold;">0</span></span>
+                </h2>
+                <div id="loadout-panel" class="loadout-panel"></div>
+            </div>
+        </div>
+
+        <button class="ark-entry-btn" onclick="gameApp.openArk()">🛰️ 进入方舟母舰</button>
+    </div>
+
+    <!-- 方舟母舰面板 -->
+    <div id="ark-panel" style="display:none;">
+        <div class="ark-top-bar">
+            <div class="ark-title">🛰️ 方舟母舰 · 指挥甲板</div>
+            <div class="ark-resource-row">
+                <span class="ark-res">🔬 核心 <b id="ark-cores">0</b></span>
+                <span class="ark-res">⚙️ 合金 <b id="ark-alloy">0</b></span>
+                <span class="ark-res">📊 数据 <b id="ark-data">0</b></span>
+                <span class="ark-res">📦 补给 <b id="ark-supply">0</b></span>
+            </div>
+            <button class="ark-close-btn" onclick="gameApp.closeArk()">← 返回星图</button>
+        </div>
+        <div class="ark-body" id="ark-body"></div>
+    </div>
+
+    <!-- HUD 层 -->
+    <div id="ui-layer" style="display: none;">
+        <div id="top-bar">
+            <div class="resource-group">
+                <div class="res-badge res-minerals">💎 <span id="res-minerals">0</span></div>
+                <div class="res-badge res-gas">⚡ <span id="res-gas">0</span></div>
+                <div class="res-badge res-supply">👥 <span id="res-supply">0/0</span></div>
+                <div class="res-badge res-wave">🔬 <span id="res-cores">0</span></div>
+                <div class="res-badge res-wave">🌊 下一波: <span id="wave-timer">0s</span></div>
+            </div>
+        </div>
+
+        <!-- 目标 / 失败条件面板 -->
+        <div id="objectives-panel" class="objectives-panel"></div>
+
+        <div id="bottom-panel">
+            <div class="panel-section" style="flex-direction: column; align-items: stretch;">
+                <div class="panel-title">战术地图</div>
+                <div id="minimap-container">
+                    <canvas id="minimap-canvas" width="140" height="140"></canvas>
+                </div>
+            </div>
+
+            <div class="panel-section" style="flex-direction: column; align-items: stretch;">
+                <div class="panel-title">生产 / 建造</div>
+                <div class="btn-grid">
+                    <button class="action-btn" id="btn-build-marine" onclick="gameApp.triggerBuild('marine')">
+                        <span class="btn-hotkey">1</span>陆战队
+                        <span class="btn-cost">50💎</span>
+                    </button>
+                    <button class="action-btn" id="btn-build-firebat" onclick="gameApp.triggerBuild('firebat')">
+                        <span class="btn-hotkey">2</span>火蝠
+                        <span class="btn-cost">100💎 25⚡</span>
+                    </button>
+                    <button class="action-btn" id="btn-build-ghost" onclick="gameApp.triggerBuild('ghost')">
+                        <span class="btn-hotkey">3</span>幽灵
+                        <span class="btn-cost">120💎 75⚡</span>
+                    </button>
+                    <button class="action-btn" id="btn-build-tank" onclick="gameApp.triggerBuild('tank')">
+                        <span class="btn-hotkey">4</span>坦克
+                        <span class="btn-cost">150💎 100⚡</span>
+                    </button>
+                    <button class="action-btn" id="btn-build-turret" onclick="gameApp.selectBuildingToPlace('turret')">
+                        <span class="btn-hotkey">5</span>自动炮塔
+                        <span class="btn-cost">120💎 25⚡</span>
+                    </button>
+                    <button class="action-btn" id="btn-build-depot" onclick="gameApp.selectBuildingToPlace('depot')">
+                        <span class="btn-hotkey">6</span>补给电站
+                        <span class="btn-cost">100💎</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel-section" style="flex-direction: column; align-items: stretch;">
+                <div id="selection-card">
+                    <div class="unit-portrait">
+                        <div class="portrait-box" id="unit-icon">🏛️</div>
+                        <div class="unit-stats">
+                            <div class="unit-name">
+                                <span id="unit-title">方舟指挥中心</span>
+                                <span class="unit-rank" id="unit-stars">★★★</span>
+                            </div>
+                            <div class="hp-bar-bg"><div class="hp-bar-fill" id="hp-fill"></div></div>
+                            <div style="font-size:11px; color:#88a0c0; margin-top:2px;" id="hp-text">HP: 0/0</div>
+                        </div>
+                    </div>
+                    <div class="skills-bar" id="unit-skills"></div>
+                    <div class="skills-bar">
+                        <button class="action-btn" id="btn-skill-orbital" onclick="gameApp.useCommanderSkill('orbital')">
+                            <span class="btn-hotkey">R</span>轨道打击
+                            <span class="btn-cost">100💎</span>
+                        </button>
+                        <button class="action-btn" id="btn-skill-repair" onclick="gameApp.useCommanderSkill('repair')">
+                            <span class="btn-hotkey">T</span>战场维修
+                            <span class="btn-cost">50💎</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 剧情 / 战役简报弹窗 -->
+    <div id="story-modal" style="display:none;">
+        <div class="dialog-box">
+            <div class="dialog-title">
+                <span id="story-title">🛰️ 接收到方舟指挥部加密通讯</span>
+                <span id="story-stage" style="font-size: 12px; color: var(--accent);">【战役阶段】</span>
+            </div>
+            <div class="dialog-content" id="dialog-text"></div>
+            <button class="action-btn" id="story-action" style="width: 100%; height: 45px; font-size: 16px; background: var(--primary); color: #000;">
+                收到，立即开始建立防线！(Enter)
+            </button>
+        </div>
+    </div>
+
+    <!-- 下载 phaser.min.js 放到本地 -->
+    <script src="./libs/phaser.min.js"></script>
+
+    <script src="js/config.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/data/campaigns.js"></script>
+    <script src="js/data/dialogues.js"></script>
+    <script src="js/data/ark.js"></script>
+    <script src="js/systems/unlock.js"></script>
+    <script src="js/systems/ark.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/arkUI.js"></script>
+    <script src="js/textures.js"></script>
+    <script src="js/entities.js"></script>
+
+    <script src="js/systems/vfx.js"></script>
+    <script src="js/systems/combat.js"></script>
+    <script src="js/systems/enemyAI.js"></script>
+    <script src="js/systems/wave.js"></script>
+    <script src="js/systems/objective.js"></script>
+    <script src="js/systems/script.js"></script>
+    <script src="js/systems/zone.js"></script>
+    <script src="js/systems/input.js"></script>
+    <script src="js/systems/camera.js"></script>
+    <script src="js/systems/minimap.js"></script>
+
+    <script src="js/scene.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

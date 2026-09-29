@@ -1,0 +1,138 @@
+
+
+## 后续方案
+
+按优先级排，从已落地到待开发：
+
+### 阶段 1：补齐旧科技迁入科研实验室
+
+- 在 `js/data/ark.js` 的 `research.upgrades` 中补 3 个节点：`node_infantryHp`、`node_mechAtk`、`node_economy`，分别对应旧的单兵复合装甲、机甲火控系统、自动化精炼厂。
+- 每个节点 `maxLevel: 3`，`cost` 数组对应 `Config.UPGRADE_COSTS`。
+- `effects` 用现有键（如 `infantryHp` / `mechAtk` / `economy`），让 `Ark.getBonuses` 汇总后由 `entities.js` / `wave.js` 读取；或保留 `State.upgrades` 作为兼容读取源，让节点升级时同步写入。
+- 完成后主菜单不再暴露旧科技入口，全部收进方舟。
+
+### 阶段 2：更多兵种卡与特色化
+
+优先做有辨识度、易程序化纹理的：
+
+- 火箭兵（反重甲/建筑，占 1 格）
+- 医疗兵（治疗，无攻击，占 1 格）
+- 工程师（修理 / 布地雷，占 1 格）
+- 侦察无人机（视野 / 标记，占 1 格）
+- 重装盾兵（坦克 / 嘲讽，占 1 格）
+- 狙击手（超远射程，低攻速，占 1 格）
+- 装甲运输车 / 导弹车（载具，占 2 格）
+
+每个新兵种：
+1. `js/config.js` 加 `UNITS` 定义
+2. `js/textures.js` 加纹理
+3. `index.html` 底栏加按钮
+4. `js/data/ark.js` 加 `CARDS` 条目 + 对应部门的 `upgrades` 解锁节点
+5. 快捷键在 `input.js` 里排
+
+### 阶段 3：指挥官技能扩充
+
+- 空投增援（舰桥）
+- 护盾场（动力核心）
+- 侦察扫描（情报通讯）
+- 纳米修复（医疗冻眠舱）
+- 无人机群（机库）
+- 地雷阵（工程）
+
+每个技能：
+1. `js/config.js`（`SKILLS`）加定义
+2. `js/systems/combat.js`（`activateCommanderSkill`）加分支
+3. `js/data/ark.js` 加 `CARDS` 条目 + 部门解锁节点
+4. `index.html` 加技能按钮 + `js/ui.js`（`updateUI`）加 enable 判定
+
+### 阶段 4：部门效果填充
+
+- 兵营训练舱：`unitXpBonus` 接入 `combat.js` 晋升经验
+- 机库军械库：空投容量、单位攻击 / 护甲加成，接入 `entities.js`
+- 动力核心：基地建筑 HP 加成
+- 情报通讯：初始视野、波次预览
+- 医疗冻眠舱：老兵床位、复活（配合老兵系统）
+- 生活娱乐：士气 / 船员效率（配合方舟经营）
+
+### 阶段 5：方舟经营扩层
+
+- 资源新增：电力、算力、士气、声望
+- 部门派驻船员
+- 家具 / 设备库存与图鉴
+- 房间网格与拖拽装修
+- 套装与相邻加成
+- 装修方案保存
+
+### 阶段 6：老兵系统
+
+- 战役结算提取存活高星单位
+- 冻眠舱床位管理
+- 下一战役空投老兵
+- 阵亡老兵概率复活
+
+### 阶段 7：成就 / 事件 / 贸易 / 赛季接口
+
+- 成就解锁独特卡牌
+- 随机方舟事件
+- 黑市 / 贸易站
+- 赛季通行证与联机接口
+
+### 阶段 8：卡牌升级
+
+- 每张卡牌可独立升级（如陆战队员卡 Lv.1→Lv.5）
+- 升级消耗科技核心 / 数据
+- 提供卡牌专属加成（单位属性 / 技能冷却 / 建筑属性）
+- `ArkData.CARDS` 加 `maxLevel` / `upgradeCost` / `effectPerLevel`；`state.ark.cards` 增加 `levels` 字段；`Ark.getCardLevel` / `Ark.upgradeCard` 接口；`arkUI.js` 卡牌详情加升级按钮。
+---
+
+## 后续方案
+
+### 阶段划分与优先级
+
+| 阶段 | 内容 | 涉及文件 | 状态 |
+|---|---|---|---|
+| **P0** | 任务语法 + 攻坚/保护/护送/坚守 5 个战役 | `objective.js` / `script.js` / `zone.js` / `campaigns.js` / `scene.js` / `entities.js` / `textures.js` / `ui.js` / `app.js` / `state.js` / `config.js` / `index.html` / `style.css` / `minimap.js` | ✅ 已完成 |
+| **P1** | 战役内容深化（可选目标、多阶段、Boss 波、随机事件） | `campaigns.js` / `objective.js` / `wave.js` / `script.js` / `ui.js` | ⏳ 待办 |
+| **P2** | 复杂地形（区域效果 → 阻挡格 → 高低差） | 新增 `js/systems/terrain.js` + `config.js` / `scene.js` / `combat.js` / `enemyAI.js` / `minimap.js` | ⏳ 待办 |
+| **P3** | 同盟 AI（友军 AI 与协同指令） | 新增 `js/systems/allyAI.js` + `entities.js` / `textures.js` / `index.html` / `ui.js` / `scene.js` / `enemyAI.js` / `objective.js` | ⏳ 待办 |
+| **P4** | 寻路（EasyStar + 阻挡格 + 绕行） | 新增 `js/systems/pathfinding.js` + EasyStar CDN + `scene.js` / `combat.js` / `enemyAI.js` | ⏳ 待办 |
+| **P5** | 方舟经营（老兵提取、部门加成接入属性、家具、声望） | `state.js` / `ark.js` / `entities.js` / `combat.js` / `campaigns.js` / `ui.js` / `index.html` / `style.css` | ⏳ 待办 |
+| **P6** | 星级评价（按用时 / 损失 / 核心计算） | `app.js` / `unlock.js` / `state.js` / `ui.js` | ⏳ 待办 |
+
+### P1 建议先做的事（按收益排序）
+
+1. **可选目标**：`objectives[]` 支持 `optional: true`，完成给额外方舟资源，不影响胜负。  
+   - 改：`objective.js`（判定）+ `ui.js`（区分显示）+ `campaigns.js`（数据）。
+2. **多阶段任务**：`phases[]` 数据模型已就位，只需一个战役试水（比如攻坚分「破盾 → 突入核心」两阶段）。  
+   - 改：`campaigns.js`（新战役）+ `ui.js`（阶段提示）。
+3. **Boss 波**：`waves[]` 支持 `boss: true` 标记，Boss 单位不参与常规刷怪，需单独生成。  
+   - 改：`config.js`（新 Boss 敌人）+ `textures.js`（Boss 纹理）+ `wave.js`（识别 Boss 波）+ `campaigns.js`。
+4. **随机事件**：地图上随机刷增援、虫巢、陨石。  
+   - 改：`wave.js`（随机事件调度）+ `config.js`（事件表）+ `campaigns.js`（启用开关）。
+
+### P2 建议：分三步做地形
+
+1. **L1 区域效果**（最高优先，改 `zone.js` 加 `effects` 字段即可）：高地 +15% 射程、酸液持续掉血、热能泉回血加速。  
+2. **L2 阻挡格**：`terrain.blocked[]` 与 `minimap.js` 绘制，敌人遇阻绕行（需 P4）。  
+3. **L3 高低差 / 视野**：需引入迷雾与视野系统，风险高，放最后。
+
+### P3 建议：同盟只做「一次性协同」
+
+不建议做完整友军 AI。第一版只做：
+- 友军基地/单位在地图上按固定路线巡逻；
+- 玩家右键标记目标，友军优先攻击；
+- 友军有独立血量，全灭算失败条件（`ally_all_dead`）；
+- 不做友军补员、不做友军建造。
+
+
+
+### 暂不做（明确排除）
+
+- 完整寻路（EasyStar）→ 等 P4。
+- 完整同盟 AI → 等 P3。
+- 方舟家具 / 装修网格 / 套装 → 等 P5。
+- 老兵空投 / 单位属性接入方舟加成 → 等 P5。
+- 多语言 / 联网 → 不在当前路线图内。
+
+
+bug：敌方优先进攻目标应该根据每关的每个波次区分，比如第四关、第五关等需要守卫目标的关卡，守卫目标应在大部分波次成为优先攻击的目标
