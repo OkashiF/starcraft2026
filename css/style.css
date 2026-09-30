@@ -30,9 +30,10 @@ body, html {
     background: linear-gradient(180deg, rgba(5,10,20,0.95) 0%, rgba(5,10,20,0.6) 80%, transparent 100%);
     padding: 12px 24px; display: flex; justify-content: space-between; align-items: center;
     border-bottom: 1px solid var(--border-glow); pointer-events: auto; backdrop-filter: blur(8px);
+    gap: 20px;
 }
 
-.resource-group { display: flex; gap: 20px; align-items: center; }
+.resource-group { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
 
 .res-badge {
     display: flex; align-items: center; gap: 6px;
@@ -47,6 +48,78 @@ body, html {
 .res-gas { color: #00ff88; }
 .res-supply { color: #ffb703; }
 .res-wave { color: #ff2a6d; }
+
+/* ===== 顶部指挥官技能栏（星际风格） ===== */
+.top-skill-bar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-left: auto;
+    flex-wrap: wrap;
+}
+
+.top-skill-btn {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 92px;
+    padding: 6px 14px 5px 14px;
+    background: rgba(0, 240, 255, 0.10);
+    border: 1px solid var(--primary);
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    font-family: var(--font-family);
+    transition: all 0.15s ease;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
+}
+
+.top-skill-btn:hover:not(:disabled) {
+    background: var(--primary);
+    color: #000;
+    box-shadow: 0 0 18px var(--primary);
+    transform: translateY(-2px);
+}
+
+.top-skill-btn:disabled {
+    border-color: #334;
+    color: #667;
+    background: rgba(20,25,35,0.55);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.top-skill-btn .top-skill-hotkey {
+    position: absolute;
+    top: 2px;
+    left: 6px;
+    font-size: 10px;
+    font-weight: bold;
+    color: var(--accent);
+    letter-spacing: 1px;
+}
+
+.top-skill-btn .top-skill-name {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    line-height: 1.2;
+    margin-top: 4px;
+}
+
+.top-skill-btn .top-skill-cost {
+    font-size: 10px;
+    opacity: 0.85;
+    margin-top: 2px;
+    color: var(--accent);
+}
+
+.top-skill-btn:hover:not(:disabled) .top-skill-cost,
+.top-skill-btn:hover:not(:disabled) .top-skill-hotkey {
+    color: #000;
+}
 
 #bottom-panel {
     background: var(--panel-bg); border-top: 2px solid var(--primary);
@@ -614,6 +687,7 @@ body, html {
         .objectives-panel .obj-row.fail {
             color: #ff9a9a;
         }
+
 /* ===== 战前装载 ===== */
 .loadout-panel {
     display: flex;

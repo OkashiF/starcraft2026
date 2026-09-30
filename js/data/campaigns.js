@@ -21,6 +21,16 @@ StarAbyss.Campaigns = {
                 { type: 'radar',   x: 1200, y: 700  },
                 { type: 'thermal', x: 600,  y: 1600 },
             ],
+            spawnPoints: {
+                north:     { x: 1200, y: 100  },
+                south:     { x: 1200, y: 2300 },
+                west:      { x: 100,  y: 1200 },
+                east:      { x: 2300, y: 1200 },
+                northwest: { x: 300,  y: 300  },
+                northeast: { x: 2100, y: 300  },
+                southwest: { x: 300,  y: 2100 },
+                southeast: { x: 2100, y: 2100 },
+            },
         },
 
         start: { minerals: 300, gas: 100, maxSupply: 20, waveTimer: 45 },
@@ -32,11 +42,41 @@ StarAbyss.Campaigns = {
         ],
 
         waves: [
-            { count: 10,  types: ['zergling'],                            interval: 45 },
-            { count: 16, types: ['zergling', 'hydralisk'],               interval: 45 },
-            { count: 32, types: ['zergling', 'hydralisk'],               interval: 40 },
-            { count: 36, types: ['hydralisk', 'ultralisk'],              interval: 40 },
-            { count: 42, types: ['zergling', 'hydralisk', 'ultralisk'],  interval: 35 },
+            {
+                interval: 45,
+                spawns: [
+                    { type: 'zergling', count: 10, at: 'north', spawnInterval: 0.6 },
+                ],
+            },
+            {
+                interval: 45,
+                spawns: [
+                    { type: 'zergling',  count: 10, at: 'north', spawnInterval: 0.5 },
+                    { type: 'hydralisk', count: 6,  at: 'east',  spawnInterval: 1.0, delay: 2 },
+                ],
+            },
+            {
+                interval: 40,
+                spawns: [
+                    { type: 'zergling',  count: 20, at: 'north', spawnInterval: 0.4 },
+                    { type: 'hydralisk', count: 12, at: 'west',  spawnInterval: 0.8, delay: 1 },
+                ],
+            },
+            {
+                interval: 40,
+                spawns: [
+                    { type: 'hydralisk', count: 20, at: 'east',  spawnInterval: 0.7 },
+                    { type: 'ultralisk', count: 16, at: 'south', spawnInterval: 1.2, delay: 3 },
+                ],
+            },
+            {
+                interval: 35,
+                spawns: [
+                    { type: 'zergling',  count: 20, at: 'north', spawnInterval: 0.3 },
+                    { type: 'hydralisk', count: 12, at: 'west',  spawnInterval: 0.6, delay: 1 },
+                    { type: 'ultralisk', count: 10, at: 'south', spawnInterval: 1.0, delay: 2 },
+                ],
+            },
         ],
 
         objectives: [
@@ -80,6 +120,14 @@ StarAbyss.Campaigns = {
                 { type: 'thermal', x: 1800, y: 900 },
                 { type: 'thermal', x: 1200, y: 400 },
             ],
+            spawnPoints: {
+                north:     { x: 1200, y: 100  },
+                south:     { x: 1200, y: 2300 },
+                west:      { x: 100,  y: 1200 },
+                east:      { x: 2300, y: 1200 },
+                northwest: { x: 300,  y: 300  },
+                northeast: { x: 2100, y: 300  },
+            },
         },
 
         start: { minerals: 400, gas: 150, maxSupply: 25, waveTimer: 40 },
@@ -92,12 +140,48 @@ StarAbyss.Campaigns = {
         ],
 
         waves: [
-            { count: 12,  types: ['zergling'],                           interval: 40 },
-            { count: 20, types: ['zergling', 'hydralisk'],              interval: 40 },
-            { count: 28, types: ['hydralisk'],                          interval: 38 },
-            { count: 38, types: ['zergling', 'hydralisk', 'ultralisk'], interval: 35 },
-            { count: 44, types: ['zergling', 'hydralisk', 'ultralisk'], interval: 32 },
-            { count: 50, types: ['ultralisk', 'hydralisk'],             interval: 30 },
+            {
+                interval: 40,
+                spawns: [
+                    { type: 'zergling', count: 12, at: 'north', spawnInterval: 0.5 },
+                ],
+            },
+            {
+                interval: 40,
+                spawns: [
+                    { type: 'zergling',  count: 12, at: 'northwest', spawnInterval: 0.5 },
+                    { type: 'hydralisk', count: 8,  at: 'northeast', spawnInterval: 0.9, delay: 2 },
+                ],
+            },
+            {
+                interval: 38,
+                spawns: [
+                    { type: 'hydralisk', count: 28, at: 'north', spawnInterval: 0.6 },
+                ],
+            },
+            {
+                interval: 35,
+                spawns: [
+                    { type: 'zergling',  count: 18, at: 'west',  spawnInterval: 0.4 },
+                    { type: 'hydralisk', count: 12, at: 'east',  spawnInterval: 0.7, delay: 1 },
+                    { type: 'ultralisk', count: 8,  at: 'north', spawnInterval: 1.0, delay: 3 },
+                ],
+            },
+            {
+                interval: 32,
+                spawns: [
+                    { type: 'zergling',  count: 20, at: 'northwest', spawnInterval: 0.3 },
+                    { type: 'hydralisk', count: 14, at: 'northeast', spawnInterval: 0.6, delay: 1 },
+                    { type: 'ultralisk', count: 10, at: 'north',     spawnInterval: 0.9, delay: 2 },
+                ],
+            },
+            {
+                interval: 30,
+                spawns: [
+                    { type: 'ultralisk', count: 30, at: 'north', spawnInterval: 0.8 },
+                    { type: 'hydralisk', count: 20, at: 'east',  spawnInterval: 0.5, delay: 2 },
+                ],
+            },
         ],
 
         objectives: [
@@ -139,6 +223,13 @@ StarAbyss.Campaigns = {
             base:  { x: 400,  y: 2000 },
             depot: { x: 300,  y: 2000 },
             nodes: [],
+            spawnPoints: {
+                north:     { x: 1200, y: 100  },
+                northeast: { x: 2100, y: 300  },
+                east:      { x: 2300, y: 1200 },
+                southeast: { x: 2100, y: 2100 },
+                northwest: { x: 300,  y: 300  },
+            },
         },
 
         start: { minerals: 500, gas: 200, maxSupply: 30, waveTimer: 60 },
@@ -151,11 +242,38 @@ StarAbyss.Campaigns = {
 
         // 刷怪较缓，主要靠要塞本身
         waves: [
-            { count: 6, types: ['zergling'],  interval: 90 },
-            { count: 8, types: ['hydralisk'], interval: 80 },
-            { count: 10, types: ['zergling', 'hydralisk'], interval: 70 },
-            { count: 12, types: ['ultralisk'], interval: 70 },
-            { count: 16, types: ['zergling', 'hydralisk'], interval: 60 },
+            {
+                interval: 90,
+                spawns: [
+                    { type: 'zergling', count: 6, at: 'northeast', spawnInterval: 1.0 },
+                ],
+            },
+            {
+                interval: 80,
+                spawns: [
+                    { type: 'hydralisk', count: 8, at: 'east', spawnInterval: 1.2 },
+                ],
+            },
+            {
+                interval: 70,
+                spawns: [
+                    { type: 'zergling',  count: 6, at: 'north', spawnInterval: 0.8 },
+                    { type: 'hydralisk', count: 4, at: 'east',  spawnInterval: 1.0, delay: 2 },
+                ],
+            },
+            {
+                interval: 70,
+                spawns: [
+                    { type: 'ultralisk', count: 12, at: 'northeast', spawnInterval: 1.5 },
+                ],
+            },
+            {
+                interval: 60,
+                spawns: [
+                    { type: 'zergling',  count: 8, at: 'north', spawnInterval: 0.6 },
+                    { type: 'hydralisk', count: 8, at: 'east',  spawnInterval: 0.9, delay: 1 },
+                ],
+            },
         ],
 
         enemyBuildings: [
@@ -203,6 +321,14 @@ StarAbyss.Campaigns = {
             base:  { x: 300,  y: 1200 },
             depot: { x: 200,  y: 1200 },
             nodes: [],
+            spawnPoints: {
+                north:     { x: 1200, y: 100  },
+                south:     { x: 1200, y: 2300 },
+                east:      { x: 2300, y: 1200 },
+                northeast: { x: 2100, y: 300  },
+                southeast: { x: 2100, y: 2100 },
+                northwest: { x: 300,  y: 300  },
+            },
         },
 
         start: { minerals: 400, gas: 120, maxSupply: 25, waveTimer: 50 },
@@ -222,10 +348,10 @@ StarAbyss.Campaigns = {
             speed: 15,
             hp: 400,
             waypoints: [
-                { x: 700,  y: 400,  dwell: 10, label: '西北高地难民营' }, // 
-                { x: 1200, y: 2100, dwell: 10, label: '南部深谷矿区' },   // 
-                { x: 1800, y: 400,  dwell: 10, label: '东北高地据点' },   // 
-                { x: 2100, y: 1200 },                                    // （终点 = zone）
+                { x: 700,  y: 400,  dwell: 10, label: '西北高地难民营' },
+                { x: 1200, y: 2100, dwell: 10, label: '南部深谷矿区' },
+                { x: 1800, y: 400,  dwell: 10, label: '东北高地据点' },
+                { x: 2100, y: 1200 },
             ],
         },
 
@@ -235,12 +361,52 @@ StarAbyss.Campaigns = {
 
         // 护送关：所有波次均让敌人主动追击车队
         waves: [
-            { count: 6,  types: ['zergling'], interval: 10, priority: 'protect' },
-            { count: 10, types: ['zergling', 'hydralisk'], interval: 15, priority: 'protect' },
-            { count: 16, types: ['hydralisk'], interval: 15, priority: 'protect' },
-            { count: 18, types: ['zergling', 'hydralisk'], interval: 15, priority: 'protect' },
-            { count: 22, types: ['ultralisk'], interval: 20, priority: 'protect' },
-            { count: 28, types: ['zergling', 'hydralisk', 'ultralisk'], interval: 25, priority: 'protect' },
+            {
+                interval: 10,
+                priority: 'protect',
+                spawns: [
+                    { type: 'zergling', count: 6, at: 'north', spawnInterval: 0.5 },
+                ],
+            },
+            {
+                interval: 15,
+                priority: 'protect',
+                spawns: [
+                    { type: 'zergling',  count: 6, at: 'north', spawnInterval: 0.4 },
+                    { type: 'hydralisk', count: 4, at: 'east',  spawnInterval: 0.8, delay: 1 },
+                ],
+            },
+            {
+                interval: 15,
+                priority: 'protect',
+                spawns: [
+                    { type: 'hydralisk', count: 16, at: 'east', spawnInterval: 0.6 },
+                ],
+            },
+            {
+                interval: 15,
+                priority: 'protect',
+                spawns: [
+                    { type: 'zergling',  count: 10, at: 'north', spawnInterval: 0.4 },
+                    { type: 'hydralisk', count: 8,  at: 'south', spawnInterval: 0.7, delay: 1 },
+                ],
+            },
+            {
+                interval: 20,
+                priority: 'protect',
+                spawns: [
+                    { type: 'ultralisk', count: 22, at: 'northeast', spawnInterval: 0.9 },
+                ],
+            },
+            {
+                interval: 25,
+                priority: 'protect',
+                spawns: [
+                    { type: 'zergling',  count: 12, at: 'north', spawnInterval: 0.3 },
+                    { type: 'hydralisk', count: 8,  at: 'east',  spawnInterval: 0.5, delay: 1 },
+                    { type: 'ultralisk', count: 8,  at: 'south', spawnInterval: 0.8, delay: 2 },
+                ],
+            },
         ],
 
         objectives: [
@@ -284,6 +450,14 @@ StarAbyss.Campaigns = {
                 { type: 'thermal', x: 600,  y: 1200 },
                 { type: 'thermal', x: 1800, y: 1200 },
             ],
+            spawnPoints: {
+                north:     { x: 1200, y: 100  },
+                south:     { x: 1200, y: 2300 },
+                west:      { x: 100,  y: 1200 },
+                east:      { x: 2300, y: 1200 },
+                northwest: { x: 300,  y: 300  },
+                northeast: { x: 2100, y: 300  },
+            },
         },
 
         // 信标建筑由场景根据 protectTarget 生成
@@ -294,22 +468,75 @@ StarAbyss.Campaigns = {
         start: { minerals: 500, gas: 180, maxSupply: 30, waveTimer: 40 },
 
         initialUnits: [
-            { type: 'marine', dx: 0,   dy: 120 },
-            { type: 'marine', dx: 40,  dy: 120 },
+            { type: 'marine',  dx: 0,   dy: 120 },
+            { type: 'marine',  dx: 40,  dy: 120 },
             { type: 'firebat', dx: -40, dy: 120 },
-            { type: 'tank',   dx: 80,  dy: 140 },
+            { type: 'tank',    dx: 80,  dy: 140 },
         ],
 
         // 坚守关：前 3 波普通索敌，第 4 波起敌人主动扑向信标
         waves: [
-            { count: 16,  types: ['zergling'],                           interval: 45 },
-            { count: 24, types: ['zergling', 'hydralisk'],              interval: 45 },
-            { count: 34, types: ['hydralisk'],                          interval: 42 },
-            { count: 48, types: ['zergling', 'hydralisk'],              interval: 40, priority: 'protect' },
-            { count: 52, types: ['zergling', 'hydralisk', 'ultralisk'], interval: 38, priority: 'protect' },
-            { count: 64, types: ['hydralisk', 'ultralisk'],             interval: 35, priority: 'protect' },
-            { count: 76, types: ['zergling', 'hydralisk', 'ultralisk'], interval: 32, priority: 'protect' },
-            { count: 80, types: ['ultralisk', 'hydralisk'],             interval: 30, priority: 'protect' },
+            {
+                interval: 45,
+                spawns: [
+                    { type: 'zergling', count: 16, at: 'north', spawnInterval: 0.4 },
+                ],
+            },
+            {
+                interval: 45,
+                spawns: [
+                    { type: 'zergling',  count: 14, at: 'northwest', spawnInterval: 0.4 },
+                    { type: 'hydralisk', count: 10, at: 'northeast', spawnInterval: 0.7, delay: 1 },
+                ],
+            },
+            {
+                interval: 42,
+                spawns: [
+                    { type: 'hydralisk', count: 34, at: 'north', spawnInterval: 0.5 },
+                ],
+            },
+            {
+                interval: 40,
+                priority: 'protect',
+                spawns: [
+                    { type: 'zergling',  count: 28, at: 'west', spawnInterval: 0.3 },
+                    { type: 'hydralisk', count: 20, at: 'east', spawnInterval: 0.5, delay: 1 },
+                ],
+            },
+            {
+                interval: 38,
+                priority: 'protect',
+                spawns: [
+                    { type: 'zergling',  count: 30, at: 'north', spawnInterval: 0.3 },
+                    { type: 'hydralisk', count: 12, at: 'west',  spawnInterval: 0.5, delay: 1 },
+                    { type: 'ultralisk', count: 10, at: 'east',  spawnInterval: 0.8, delay: 2 },
+                ],
+            },
+            {
+                interval: 35,
+                priority: 'protect',
+                spawns: [
+                    { type: 'hydralisk', count: 40, at: 'north', spawnInterval: 0.4 },
+                    { type: 'ultralisk', count: 24, at: 'east',  spawnInterval: 0.7, delay: 1 },
+                ],
+            },
+            {
+                interval: 32,
+                priority: 'protect',
+                spawns: [
+                    { type: 'zergling',  count: 40, at: 'northwest', spawnInterval: 0.2 },
+                    { type: 'hydralisk', count: 20, at: 'northeast', spawnInterval: 0.4, delay: 1 },
+                    { type: 'ultralisk', count: 16, at: 'north',     spawnInterval: 0.6, delay: 2 },
+                ],
+            },
+            {
+                interval: 30,
+                priority: 'protect',
+                spawns: [
+                    { type: 'ultralisk', count: 50, at: 'north', spawnInterval: 0.6 },
+                    { type: 'hydralisk', count: 30, at: 'east',  spawnInterval: 0.4, delay: 1 },
+                ],
+            },
         ],
 
         objectives: [

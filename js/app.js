@@ -101,7 +101,6 @@ StarAbyss.App = {
     },
 
     buyUpgrade(type) {
-        // 旧科技入口已迁移到方舟科研实验室，此方法保留兼容
         const map = {
             infantryHp: ['research', 'node_infantryHp'],
             mechAtk: ['research', 'node_mechAtk'],
@@ -138,7 +137,12 @@ StarAbyss.App = {
 
         StarAbyss.audio.playClick();
         S.placingBuildingType = bType;
-        StarAbyss.UI.showToast(`模式: 请在地图上点击放置 [${bType === 'turret' ? '自动炮塔' : '补给电站'}]`);
+        const names = {
+            turret: '自动炮塔', depot: '补给电站',
+            flame_turret: '火焰塔', sniper_turret: '狙击塔',
+            repair_station: '维修站', radar_station: '雷达站', wall: '障碍墙'
+        };
+        StarAbyss.UI.showToast(`模式: 请在地图上点击放置 [${names[bType] || bType}]`);
     },
 
     useCommanderSkill(skill) {

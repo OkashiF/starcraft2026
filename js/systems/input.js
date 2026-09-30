@@ -84,11 +84,29 @@ StarAbyss.InputSystem = class {
                 case '2': StarAbyss.App.triggerBuild('firebat'); break;
                 case '3': StarAbyss.App.triggerBuild('ghost'); break;
                 case '4': StarAbyss.App.triggerBuild('tank'); break;
-                case '5': StarAbyss.App.selectBuildingToPlace('turret'); break;
-                case '6': StarAbyss.App.selectBuildingToPlace('depot'); break;
+                case '5': StarAbyss.App.triggerBuild('rocketeer'); break;
+                case '6': StarAbyss.App.triggerBuild('medic'); break;
+                case '7': StarAbyss.App.triggerBuild('engineer'); break;
+                case '8': StarAbyss.App.triggerBuild('drone'); break;
+                case '9': StarAbyss.App.triggerBuild('shieldman'); break;
+                case '0': StarAbyss.App.triggerBuild('sniper'); break;
+
+                case 'q': case 'Q': StarAbyss.App.selectBuildingToPlace('turret'); break;
+                case 'w': case 'W': StarAbyss.App.selectBuildingToPlace('flame_turret'); break;
+                case 'e': case 'E': scene.combat.toggleSiegeMode(); break;
+                case 'a': case 'A': StarAbyss.App.selectBuildingToPlace('sniper_turret'); break;
+                case 's': case 'S': StarAbyss.App.selectBuildingToPlace('repair_station'); break;
+                case 'd': case 'D': StarAbyss.App.selectBuildingToPlace('radar_station'); break;
+                case 'f': case 'F': StarAbyss.App.selectBuildingToPlace('wall'); break;
+
                 case 'r': case 'R': StarAbyss.App.useCommanderSkill('orbital'); break;
                 case 't': case 'T': StarAbyss.App.useCommanderSkill('repair'); break;
-                case 'e': case 'E': scene.combat.toggleSiegeMode(); break;
+                case 'y': case 'Y': StarAbyss.App.useCommanderSkill('airdrop'); break;
+                case 'u': case 'U': StarAbyss.App.useCommanderSkill('shield_field'); break;
+                case 'i': case 'I': StarAbyss.App.useCommanderSkill('scan'); break;
+                case 'o': case 'O': StarAbyss.App.useCommanderSkill('nano_repair'); break;
+                case 'p': case 'P': StarAbyss.App.useCommanderSkill('minefield'); break;
+                case 'g': case 'G': StarAbyss.App.useCommanderSkill('emp'); break;
             }
         });
     }

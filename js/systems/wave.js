@@ -30,7 +30,6 @@ StarAbyss.WaveSystem = class {
                     + S.upgrades.economy * E.ECO_GAS_BONUS
                     + (arkB.econGasPerSec || 0);
 
-                // 据点持续收益
                 const CAP = StarAbyss.Config.CAPTURE;
                 this.scene.captureNodes.getChildren().forEach(node => {
                     if (node.owner !== 'player') return;
@@ -69,31 +68,96 @@ StarAbyss.WaveSystem = class {
 
         scene.scriptSystem.fire({ type: 'onWave', wave: S.wave });
 
-        const WS = StarAbyss.Config.WAVE_SPAWN;
-        const count = waveCfg.count;
-        const types = waveCfg.types;
-        // 本波敌人的攻击优先级：'default' / 'protect' / 'base'
-        const priority = waveCfg.priority || 'default';
+        const defaultPriority = waveCfg.priority || 'default';
+        const spawns = waveCfg.spawns || [];
 
-        for (let i = 0; i < count; i++) {
-            const edge = Math.floor(Math.random() * 4);
-            let ex = WS.EDGE_MARGIN, ey = WS.EDGE_MARGIN;
-            if (edge === 1) ex = campaign.map.width - WS.EDGE_MARGIN;
-            if (edge === 2) ey = campaign.map.height - WS.EDGE_MARGIN;
+        spawns.forEach(spec => {
+            const count = spec.count || 1;
+            const spawnInterval = spec.spawnInterval != null ? spec.spawnInterval : 0.5;
+            const delay = spec.delay || 0;
+            const priority = spec.priority || defaultPriority;
+            const isBoss = !!spec.boss;
+            const tags = spec.tags || (isBoss ? ['boss'] : null);
 
-            const type = types[Math.floor(Math.random() * types.length)];
-            scene.unitFactory.spawnEnemy(
-                type,
-                ex + Math.random() * WS.JITTER,
-                ey + Math.random() * WS.JITTER,
-                null,          // tags
-                priority       // 攻击优先级
-            );
-        }
+            for (let i = 0; i < count; i++) {
+                const spawnDelay = (delay + i * spawnInterval) * 1000;
+                scene.time.delayedCall(spawnDelay, () => {
+                    if (S.isGameOver) return;
+
+                    const pos = this._resolveSpawnPosition(spec, campaign);
+                    const enemy = scene.unitFactory.spawnEnemy(
+                        spec.type,
+                        pos.x,
+                        pos.y,
+                        tags,
+                        priority
+                    );
+
+                    if (enemy && isBoss) {
+                        enemy.isBoss = true;
+                        enemy.setScale(1.6);
+                        enemy.hp *= 3;
+                        enemy.maxHp = enemy.hp;
+                        enemy.damage *= 1.5;
+                    }
+                });
+            }
+        });
 
         S.waveTimer = waveCfg.interval;
         S.wave++;
         this._waveTriggered++;
+    }
+
+    _resolveSpawnPosition(spec, campaign) {
+        const map = campaign.map;
+
+        // 精确出生点：at: 'north' 或 at: { x, y }
+        if (spec.at) {
+            if (typeof spec.at === 'string') {
+                const pt = map.spawnPoints && map.spawnPoints[spec.at];
+                if (pt) return { x: pt.x, y: pt.y };
+                console.warn(`[WaveSystem] 未找到出生点: ${spec.at}`);
+            } else if (typeof spec.at === 'object' && spec.at.x != null && spec.at.y != null) {
+                return { x: spec.at.x, y: spec.at.y };
+            }
+        }
+
+        // 出生区域：zone: 'north_area' 或 zone: { shape, x, y, r/w/h }
+        if (spec.zone) {
+            const zoneDef = typeof spec.zone === 'string'
+                ? (map.spawnZones && map.spawnZones[spec.zone])
+                : spec.zone;
+
+            if (zoneDef) {
+                if (zoneDef.shape === 'circle') {
+                    const angle = Math.random() * Math.PI * 2;
+                    const r = Math.random() * zoneDef.r;
+                    return {
+                        x: zoneDef.x + Math.cos(angle) * r,
+                        y: zoneDef.y + Math.sin(angle) * r,
+                    };
+                }
+                if (zoneDef.shape === 'rect') {
+                    return {
+                        x: zoneDef.x + Math.random() * zoneDef.w,
+                        y: zoneDef.y + Math.random() * zoneDef.h,
+                    };
+                }
+            }
+        }
+
+        // 兜底：随机边缘（正常情况下新数据不会走到这里）
+        const WS = StarAbyss.Config.WAVE_SPAWN;
+        const edge = Math.floor(Math.random() * 4);
+        let ex = WS.EDGE_MARGIN;
+        let ey = WS.EDGE_MARGIN;
+        if (edge === 1) ex = map.width - WS.EDGE_MARGIN;
+        if (edge === 2) ey = map.height - WS.EDGE_MARGIN;
+        return {
+            x: ex + Math.random() * WS.JITTER,
+            y: ey + Math.random() * WS.JITTER,
+        };
     }
 
     update(_time, _delta) {
@@ -150,7 +214,11 @@ StarAbyss.WaveSystem = class {
         };
 
         scene.friendlyUnits.getChildren().forEach(u => drawHp(u, 26, 30));
-        scene.enemyUnits.getChildren().forEach(e => drawHp(e, e.eType === 'ultralisk' ? 45 : 26, e.eType === 'ultralisk' ? 50 : 30));
+        scene.enemyUnits.getChildren().forEach(e => {
+            if (e.isEnemyBuilding) return;
+            const isBig = e.eType === 'ultralisk' || e.isBoss;
+            drawHp(e, isBig ? 45 : 26, isBig ? 50 : 30);
+        });
         scene.friendlyBuildings.getChildren().forEach(b => {
             const w = b.bType === 'base' ? 90 : 50;
             const off = b.bType === 'base' ? 70 : 40;
@@ -159,6 +227,11 @@ StarAbyss.WaveSystem = class {
         if (scene.convoyUnits) {
             scene.convoyUnits.getChildren().forEach(c => drawHp(c, 32, 40));
         }
+        // 敌方建筑血条
+        scene.enemyUnits.getChildren().forEach(eb => {
+            if (!eb.isEnemyBuilding) return;
+            drawHp(eb, 55, 70);
+        });
 
         scene.captureNodes.getChildren().forEach(node => {
             if (node.captureProgress > 0 && node.owner !== 'player') {

@@ -68,6 +68,8 @@
                 <div class="res-badge res-wave">🔬 <span id="res-cores">0</span></div>
                 <div class="res-badge res-wave">🌊 下一波: <span id="wave-timer">0s</span></div>
             </div>
+            <!-- 顶部指挥官技能栏（星际风格），由 UI.renderTopSkillBar 动态生成 -->
+            <div id="top-skill-bar" class="top-skill-bar"></div>
         </div>
 
         <!-- 目标 / 失败条件面板 -->
@@ -82,8 +84,8 @@
             </div>
 
             <div class="panel-section" style="flex-direction: column; align-items: stretch;">
-                <div class="panel-title">生产 / 建造</div>
-                <div class="btn-grid">
+                <div class="panel-title">生产（单位）</div>
+                <div class="btn-grid" id="unit-btn-grid">
                     <button class="action-btn" id="btn-build-marine" onclick="gameApp.triggerBuild('marine')">
                         <span class="btn-hotkey">1</span>陆战队
                         <span class="btn-cost">50💎</span>
@@ -100,13 +102,61 @@
                         <span class="btn-hotkey">4</span>坦克
                         <span class="btn-cost">150💎 100⚡</span>
                     </button>
+                    <button class="action-btn" id="btn-build-rocketeer" onclick="gameApp.triggerBuild('rocketeer')">
+                        <span class="btn-hotkey">5</span>火箭兵
+                        <span class="btn-cost">75💎 25⚡</span>
+                    </button>
+                    <button class="action-btn" id="btn-build-medic" onclick="gameApp.triggerBuild('medic')">
+                        <span class="btn-hotkey">6</span>医疗兵
+                        <span class="btn-cost">60💎 20⚡</span>
+                    </button>
+                    <button class="action-btn" id="btn-build-engineer" onclick="gameApp.triggerBuild('engineer')">
+                        <span class="btn-hotkey">7</span>工程师
+                        <span class="btn-cost">70💎 20⚡</span>
+                    </button>
+                    <button class="action-btn" id="btn-build-drone" onclick="gameApp.triggerBuild('drone')">
+                        <span class="btn-hotkey">8</span>无人机
+                        <span class="btn-cost">40💎 10⚡</span>
+                    </button>
+                    <button class="action-btn" id="btn-build-shieldman" onclick="gameApp.triggerBuild('shieldman')">
+                        <span class="btn-hotkey">9</span>盾卫
+                        <span class="btn-cost">90💎 30⚡</span>
+                    </button>
+                    <button class="action-btn" id="btn-build-sniper" onclick="gameApp.triggerBuild('sniper')">
+                        <span class="btn-hotkey">0</span>狙击手
+                        <span class="btn-cost">100💎 40⚡</span>
+                    </button>
+                </div>
+
+                <div class="panel-title" style="margin-top:10px;">建造（建筑）</div>
+                <div class="btn-grid" id="building-btn-grid">
                     <button class="action-btn" id="btn-build-turret" onclick="gameApp.selectBuildingToPlace('turret')">
-                        <span class="btn-hotkey">5</span>自动炮塔
+                        <span class="btn-hotkey">Q</span>自动炮塔
                         <span class="btn-cost">120💎 25⚡</span>
                     </button>
                     <button class="action-btn" id="btn-build-depot" onclick="gameApp.selectBuildingToPlace('depot')">
-                        <span class="btn-hotkey">6</span>补给电站
+                        <span class="btn-hotkey">-</span>补给电站
                         <span class="btn-cost">100💎</span>
+                    </button>
+                    <button class="action-btn" id="btn-build-flame_turret" onclick="gameApp.selectBuildingToPlace('flame_turret')">
+                        <span class="btn-hotkey">W</span>火焰塔
+                        <span class="btn-cost">100💎</span>
+                    </button>
+                    <button class="action-btn" id="btn-build-sniper_turret" onclick="gameApp.selectBuildingToPlace('sniper_turret')">
+                        <span class="btn-hotkey">A</span>狙击塔
+                        <span class="btn-cost">120💎 25⚡</span>
+                    </button>
+                    <button class="action-btn" id="btn-build-repair_station" onclick="gameApp.selectBuildingToPlace('repair_station')">
+                        <span class="btn-hotkey">S</span>维修站
+                        <span class="btn-cost">100💎 25⚡</span>
+                    </button>
+                    <button class="action-btn" id="btn-build-radar_station" onclick="gameApp.selectBuildingToPlace('radar_station')">
+                        <span class="btn-hotkey">D</span>雷达站
+                        <span class="btn-cost">80💎 40⚡</span>
+                    </button>
+                    <button class="action-btn" id="btn-build-wall" onclick="gameApp.selectBuildingToPlace('wall')">
+                        <span class="btn-hotkey">F</span>障碍墙
+                        <span class="btn-cost">50💎</span>
                     </button>
                 </div>
             </div>
@@ -125,16 +175,6 @@
                         </div>
                     </div>
                     <div class="skills-bar" id="unit-skills"></div>
-                    <div class="skills-bar">
-                        <button class="action-btn" id="btn-skill-orbital" onclick="gameApp.useCommanderSkill('orbital')">
-                            <span class="btn-hotkey">R</span>轨道打击
-                            <span class="btn-cost">100💎</span>
-                        </button>
-                        <button class="action-btn" id="btn-skill-repair" onclick="gameApp.useCommanderSkill('repair')">
-                            <span class="btn-hotkey">T</span>战场维修
-                            <span class="btn-cost">50💎</span>
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -154,7 +194,6 @@
         </div>
     </div>
 
-    <!-- 下载 phaser.min.js 放到本地 -->
     <script src="./libs/phaser.min.js"></script>
 
     <script src="js/config.js"></script>

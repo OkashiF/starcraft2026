@@ -22,17 +22,43 @@ StarAbyss.EnemyAISystem = class {
             });
         }
 
+        // 盾卫嘲讽列表
+        const taunts = [];
+        scene.friendlyUnits.getChildren().forEach(u => {
+            if (!u.active) return;
+            const def = StarAbyss.Config.UNITS[u.uType];
+            if (def && def.isTaunt) taunts.push(u);
+        });
+
         scene.enemyUnits.getChildren().forEach(enemy => {
             if (enemy.isEnemyBuilding) return;   // 跳过敌方建筑
 
+            // 状态限制
+            const status = enemy.status || {};
+            if (status.stunUntil > time) {
+                enemy.setVelocity(0, 0);
+                return;
+            }
+            const speedMult = status.slowUntil > time ? StarAbyss.Config.STATUS.SLOW_FACTOR : 1;
+
             const priority = enemy.attackPriority || 'default';
+            const attackRange = enemy.attackRange || 35;
 
             let target = null;
             let targetType = null;
             let targetDist = Infinity;
 
-            if (priority === 'protect') {
-                // 保护目标优先：无视距离扑向最近的保护目标
+            // 盾卫嘲讽优先级最高（范围内）
+            let tauntTarget = null, tauntDist = Infinity;
+            taunts.forEach(u => {
+                const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, u.x, u.y);
+                if (d < 140 && d < tauntDist) { tauntTarget = u; tauntDist = d; }
+            });
+            if (tauntTarget) {
+                target = tauntTarget;
+                targetType = 'unit';
+                targetDist = tauntDist;
+            } else if (priority === 'protect') {
                 protectTargets.forEach(t => {
                     if (!t.active || t.hp <= 0) return;
                     const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, t.x, t.y);
@@ -43,8 +69,8 @@ StarAbyss.EnemyAISystem = class {
                     }
                 });
 
-                // 极近距离友军转火（120px）
                 scene.friendlyUnits.getChildren().forEach(u => {
+                    if (!u.active) return;
                     const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, u.x, u.y);
                     if (d < 120 && d < targetDist) {
                         target = u;
@@ -53,7 +79,6 @@ StarAbyss.EnemyAISystem = class {
                     }
                 });
 
-                // 没有保护目标时回落到基地
                 if (!target) {
                     target = scene.commandCenter;
                     targetType = 'base';
@@ -62,15 +87,14 @@ StarAbyss.EnemyAISystem = class {
                         : Infinity;
                 }
             } else if (priority === 'base') {
-                // 基地优先：无视距离扑向指挥中心
                 target = scene.commandCenter;
                 targetType = 'base';
                 targetDist = target
                     ? Phaser.Math.Distance.Between(enemy.x, enemy.y, target.x, target.y)
                     : Infinity;
 
-                // 极近距离友军 / 保护目标转火（120px）
                 scene.friendlyUnits.getChildren().forEach(u => {
+                    if (!u.active) return;
                     const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, u.x, u.y);
                     if (d < 120 && d < targetDist) {
                         target = u;
@@ -88,15 +112,14 @@ StarAbyss.EnemyAISystem = class {
                     }
                 });
             } else {
-                // default：保持原有行为
                 target = scene.commandCenter;
                 targetType = 'base';
                 targetDist = target
                     ? Phaser.Math.Distance.Between(enemy.x, enemy.y, target.x, target.y)
                     : Infinity;
 
-                // 优先攻击附近友军单位
                 scene.friendlyUnits.getChildren().forEach(u => {
+                    if (!u.active) return;
                     const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, u.x, u.y);
                     if (d < 120 && d < targetDist) {
                         target = u;
@@ -105,7 +128,6 @@ StarAbyss.EnemyAISystem = class {
                     }
                 });
 
-                // 其次攻击保护目标（在附近时优先于基地）
                 protectTargets.forEach(t => {
                     if (!t.active || t.hp <= 0) return;
                     const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, t.x, t.y);
@@ -119,33 +141,41 @@ StarAbyss.EnemyAISystem = class {
 
             if (!target) return;
 
-            if (targetDist > 35) {
-                scene.physics.moveToObject(enemy, target, enemy.speed);
+            if (targetDist > attackRange) {
+                scene.physics.moveToObject(enemy, target, enemy.speed * speedMult);
                 enemy.rotation = Phaser.Math.Angle.Between(enemy.x, enemy.y, target.x, target.y);
             } else {
                 enemy.setVelocity(0, 0);
                 if (time > enemy.lastAtkTime + enemy.atkCooldown) {
                     enemy.lastAtkTime = time;
 
+                    const def = StarAbyss.Config.ENEMIES[enemy.eType] || {};
+
                     if (targetType === 'base') {
-                        scene.commandCenter.hp -= enemy.damage;
+                        scene.combat.damageBuilding(scene.commandCenter, enemy.damage, enemy);
                         StarAbyss.UI.flashDamage();
                         StarAbyss.UI.updateSelectionCard(scene);
-                        if (scene.commandCenter.hp <= 0) {
-                            scene.combat._destroyBuilding(scene.commandCenter);
+                        if (!scene.commandCenter.active || scene.commandCenter.hp <= 0) {
                             StarAbyss.App.gameOver(false, '指挥中心被摧毁');
                         }
                     } else if (targetType === 'unit') {
                         target.hp -= enemy.damage;
                         if (target.hp <= 0) {
-                            S.usedSupply = Math.max(0, S.usedSupply - 1);
-                            S.recordLoss();
-                            if (target.starText) target.starText.destroy();
-                            target.destroy();
-                            StarAbyss.UI.updateUI();
+                            scene.combat._killFriendly(target);
                         }
                     } else if (targetType === 'protect') {
                         scene.combat.damageBuilding(target, enemy.damage, enemy);
+
+                        // 远程敌人（酸蚀者）命中时生成酸液
+                        if (def.onHitAcid && !enemy.isEnemyBuilding) {
+                            scene.combat._acidZones.push({
+                                x: target.x,
+                                y: target.y,
+                                radius: def.onHitAcid.radius,
+                                dps: def.onHitAcid.dps,
+                                until: time + def.onHitAcid.duration,
+                            });
+                        }
                     }
                 }
             }

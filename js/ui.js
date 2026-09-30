@@ -4,6 +4,18 @@ window.StarAbyss = window.StarAbyss || {};
 StarAbyss.UI = {
     $: (id) => document.getElementById(id),
 
+    // 指挥官技能快捷键映射（顶部技能栏）
+    SKILL_HOTKEYS: {
+        orbital: 'R',
+        repair: 'T',
+        airdrop: 'Y',
+        shield_field: 'U',
+        scan: 'I',
+        nano_repair: 'O',
+        minefield: 'P',
+        emp: 'G',
+    },
+
     updateUI() {
         const S = StarAbyss.State;
         const C = StarAbyss.Config;
@@ -14,38 +26,127 @@ StarAbyss.UI = {
         this.$('res-cores').innerText = S.techCores;
         this.$('wave-timer').innerText = S.waveTimer + 's';
 
-        // 是否已解锁且已携带
         const canBuild = (key) => {
             if (StarAbyss.Ark && StarAbyss.Ark.canBuild) {
                 return StarAbyss.Ark.canBuild(key);
             }
             return true;
         };
-        const canSkill = (key) => {
-            if (StarAbyss.Ark && StarAbyss.Ark.canUseSkill) {
-                return StarAbyss.Ark.canUseSkill(key);
-            }
-            return true;
-        };
 
         const U = C.UNITS;
-        this.$('btn-build-marine').disabled  = !canBuild('marine')  || S.minerals < U.marine.cost.minerals || S.usedSupply >= S.maxSupply;
-        this.$('btn-build-firebat').disabled = !canBuild('firebat') || S.minerals < U.firebat.cost.minerals || S.gas < U.firebat.cost.gas || S.usedSupply + U.firebat.supply > S.maxSupply;
-        this.$('btn-build-ghost').disabled   = !canBuild('ghost')   || S.minerals < U.ghost.cost.minerals   || S.gas < U.ghost.cost.gas   || S.usedSupply + U.ghost.supply > S.maxSupply;
-        this.$('btn-build-tank').disabled    = !canBuild('tank')    || S.minerals < U.tank.cost.minerals    || S.gas < U.tank.cost.gas    || S.usedSupply + U.tank.supply > S.maxSupply;
-
         const B = C.BUILDINGS;
-        this.$('btn-build-turret').disabled = !canBuild('turret') || S.minerals < B.turret.cost.minerals || S.gas < B.turret.cost.gas;
-        this.$('btn-build-depot').disabled  = S.minerals < B.depot.cost.minerals;
 
-        this.$('btn-skill-orbital').disabled = !canSkill('orbital') || S.minerals < C.SKILLS.orbital.cost;
-        this.$('btn-skill-repair').disabled  = !canSkill('repair')  || S.minerals < C.SKILLS.repair.cost;
+        // ===== 单位按钮：未解锁 / 未携带 → 隐藏；已解锁 → 按资源/人口禁用 =====
+        const refreshUnitBtn = (btnId, unitKey) => {
+            const btn = this.$(btnId);
+            if (!btn) return;
+            const u = U[unitKey];
+            if (!u) { btn.style.display = 'none'; return; }
 
-        // 目标面板
+            if (!canBuild(unitKey)) {
+                btn.style.display = 'none';
+                return;
+            }
+            btn.style.display = '';
+            btn.disabled = S.minerals < u.cost.minerals
+                || S.gas < u.cost.gas
+                || S.usedSupply + u.supply > S.maxSupply;
+        };
+        refreshUnitBtn('btn-build-marine', 'marine');
+        refreshUnitBtn('btn-build-firebat', 'firebat');
+        refreshUnitBtn('btn-build-ghost', 'ghost');
+        refreshUnitBtn('btn-build-tank', 'tank');
+        refreshUnitBtn('btn-build-rocketeer', 'rocketeer');
+        refreshUnitBtn('btn-build-medic', 'medic');
+        refreshUnitBtn('btn-build-engineer', 'engineer');
+        refreshUnitBtn('btn-build-drone', 'drone');
+        refreshUnitBtn('btn-build-shieldman', 'shieldman');
+        refreshUnitBtn('btn-build-sniper', 'sniper');
+
+        // ===== 建筑按钮：无卡牌（如 depot）永远显示；有卡牌则按解锁/携带 =====
+        const refreshBuildingBtn = (btnId, bKey, costOverride) => {
+            const btn = this.$(btnId);
+            if (!btn) return;
+            const def = B[bKey];
+            const cost = costOverride || (def && def.cost) || { minerals: 0, gas: 0 };
+
+            // depot 没有卡牌，canBuild 返回 true
+            if (!canBuild(bKey)) {
+                btn.style.display = 'none';
+                return;
+            }
+            btn.style.display = '';
+            btn.disabled = S.minerals < (cost.minerals || 0) || S.gas < (cost.gas || 0);
+        };
+        refreshBuildingBtn('btn-build-turret', 'turret');
+        refreshBuildingBtn('btn-build-depot', 'depot');
+        refreshBuildingBtn('btn-build-flame_turret', 'flame_turret');
+        refreshBuildingBtn('btn-build-sniper_turret', 'sniper_turret');
+        refreshBuildingBtn('btn-build-repair_station', 'repair_station');
+        refreshBuildingBtn('btn-build-radar_station', 'radar_station');
+        refreshBuildingBtn('btn-build-wall', 'wall');
+
+        // ===== 顶部指挥官技能栏 =====
+        this.renderTopSkillBar();
+
+        // ===== 目标面板 =====
         this.renderObjectivesPanel();
     },
 
-    // ===== 目标 / 失败条件面板 =====
+    // ===== 顶部指挥官技能栏 =====
+    // 仅显示已解锁且已在战前装载中携带的技能卡
+    renderTopSkillBar() {
+        const bar = this.$('top-skill-bar');
+        if (!bar) return;
+
+        if (!StarAbyss.Ark || !StarAbyss.ArkData) {
+            bar.innerHTML = '';
+            return;
+        }
+        StarAbyss.Ark.ensureState();
+
+        const S = StarAbyss.State;
+        const D = StarAbyss.ArkData;
+        const SK = StarAbyss.Config.SKILLS;
+        const equipped = StarAbyss.Ark.getLoadout();
+
+        // 收集携带的技能卡
+        const equippedSkills = [];
+        equipped.forEach(cardId => {
+            const card = D.CARDS[cardId];
+            if (!card || card.type !== 'skill') return;
+            if (!StarAbyss.Ark.isCardUnlocked(cardId)) return;
+            equippedSkills.push(card);
+        });
+
+        if (equippedSkills.length === 0) {
+            bar.innerHTML = '';
+            bar.style.display = 'none';
+            return;
+        }
+        bar.style.display = 'flex';
+
+        const html = equippedSkills.map(card => {
+            const skillKey = card.skillKey;
+            const cfg = SK[skillKey];
+            if (!cfg) return '';
+            const canAfford = S.minerals >= cfg.cost;
+            const disabled = canAfford ? '' : 'disabled';
+            const hotkey = this.SKILL_HOTKEYS[skillKey] || '';
+            return `
+                <button class="top-skill-btn" ${disabled}
+                    title="${card.name} · ${card.desc || ''} （消耗 ${cfg.cost} 💎）"
+                    onclick="gameApp.useCommanderSkill('${skillKey}')">
+                    <span class="top-skill-hotkey">${hotkey}</span>
+                    <span class="top-skill-name">${card.name}</span>
+                    <span class="top-skill-cost">${cfg.cost}💎</span>
+                </button>
+            `;
+        }).join('');
+
+        bar.innerHTML = html;
+    },
+
     renderObjectivesPanel() {
         const S = StarAbyss.State;
         const campaign = S.getCurrentCampaign && S.getCurrentCampaign();
@@ -58,13 +159,12 @@ StarAbyss.UI = {
 
         const scene = StarAbyss.App.scene;
         const objSys = scene && scene.objectiveSystem;
-        const failSys = scene && scene.objectiveSystem;
 
         const objectives = (objSys && objSys.describeObjectives)
             ? objSys.describeObjectives(campaign)
             : (campaign.objectives || []).map(o => o.type);
-        const fails = (failSys && failSys.describeFailConditions)
-            ? failSys.describeFailConditions(campaign)
+        const fails = (objSys && objSys.describeFailConditions)
+            ? objSys.describeFailConditions(campaign)
             : [];
 
         let html = '<div class="obj-title">🎯 任务目标</div>';
@@ -77,8 +177,6 @@ StarAbyss.UI = {
         panel.innerHTML = html;
     },
 
-    // 主菜单资源与旧科技按钮刷新
-    // 注意：HTML 里已删除旧三项科技节点，这里做空值保护
     updateMenuUI() {
         const S = StarAbyss.State;
 
@@ -107,7 +205,6 @@ StarAbyss.UI = {
         });
     },
 
-    // 方舟面板渲染：转发到 ArkUI（新方舟系统）
     renderArkPanel() {
         if (StarAbyss.ArkUI && StarAbyss.ArkUI.render) {
             StarAbyss.ArkUI.render();

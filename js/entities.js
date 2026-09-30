@@ -6,7 +6,23 @@ StarAbyss.UnitFactory = class {
         this.scene = scene;
     }
 
-    spawnFriendly(type, x = null, y = null, isFree = false) {
+    _initCommon(entity, def, isFriendly) {
+        entity.armorType = def.armorType || (isFriendly ? 'light' : 'bio');
+        entity.tags = def.tags ? def.tags.slice() : [];
+        entity.bonusVs = def.bonusVs || {};
+        entity.status = {
+            stunUntil: 0,
+            slowUntil: 0,
+            slowFactor: 1,
+            burnUntil: 0,
+            burnDps: 0,
+            markUntil: 0,
+            shield: 0,
+            shieldUntil: 0,
+        };
+    }
+
+    spawnFriendly(type, x = null, y = null, isFree = false, opts = {}) {
         const scene = this.scene;
         const S = StarAbyss.State;
         const def = StarAbyss.Config.UNITS[type];
@@ -57,6 +73,14 @@ StarAbyss.UnitFactory = class {
         unit.targetPos = null;
         unit.setCollideWorldBounds(true);
 
+        this._initCommon(unit, def, true);
+
+        // 临时召唤物生命周期（空投增援等）
+        if (opts.lifetime && opts.lifetime > 0) {
+            unit.lifetime = opts.lifetime;
+            unit.spawnedAt = scene.time.now;
+        }
+
         unit.starText = scene.add.text(unit.x, unit.y - 20, '', { font: '10px Segoe UI', fill: '#ffb703' }).setOrigin(0.5);
 
         StarAbyss.UI.showToast(`已部署: [${def.name}]`);
@@ -80,12 +104,15 @@ StarAbyss.UnitFactory = class {
         enemy.atkCooldown = def.atkCooldown;
         enemy.lastAtkTime = 0;
         enemy.setCollideWorldBounds(true);
+        enemy.attackRange = def.attackRange || 40;
 
         // tags 用于 destroy_target 目标统计
         enemy.tags = tags ? tags.slice() : (def.tags ? def.tags.slice() : []);
 
         // 攻击优先级（按波次写入）
         enemy.attackPriority = priority || 'default';
+
+        this._initCommon(enemy, def, false);
 
         return enemy;
     }
@@ -112,10 +139,13 @@ StarAbyss.BuildingFactory = class {
         b.hp = def.hp;
         b.maxHp = def.hp;
         b.lastAtkTime = 0;
+        b.armorType = def.armorType || 'building';
+        b.tags = def.tags ? def.tags.slice() : ['structure'];
+        b.bonusVs = def.bonusVs || {};
         this.scene.friendlyBuildings.add(b);
 
         StarAbyss.audio.playClick();
-        StarAbyss.UI.showToast(`建造完成: [${bType === 'depot' ? '补给电站' : '自动炮塔'}]`);
+        StarAbyss.UI.showToast(`建造完成: [${bType}]`);
     }
 
     // 生成保护目标（信标、护盾发生器、要塞核心等）
@@ -131,9 +161,10 @@ StarAbyss.BuildingFactory = class {
         b.targetId = cfg.id;
         b.tags = cfg.tags || [cfg.id, cfg.type];
         b.isProtectTarget = true;
+        b.armorType = def.armorType || 'building';
+        b.bonusVs = def.bonusVs || {};
         scene.friendlyBuildings.add(b);
 
-        // 标签
         if (cfg.label) {
             b.label = scene.add.text(cfg.x, cfg.y - (def.h / 2 + 18), `🛡️ ${cfg.label}`, {
                 font: '13px Segoe UI', fill: '#00f0ff', fontStyle: 'bold',
@@ -142,26 +173,45 @@ StarAbyss.BuildingFactory = class {
         return b;
     }
 
-    // 生成敌人关键建筑（要塞核心）
+    // 生成敌方关键建筑
     spawnEnemyBuilding(cfg) {
         const scene = this.scene;
-        const tex = cfg.texture || 'tex_shield_gen';
-        // 用 dynamic sprite 而不是 staticSprite，避免加入 dynamic physics group 时报错
+        const def = StarAbyss.Config.BUILDINGS[cfg.type] || {};
+        const tex = cfg.texture || def.texture || 'tex_shield_gen';
+
         const b = scene.physics.add.sprite(cfg.x, cfg.y, tex);
         b.bType = cfg.type || 'enemy_building';
-        b.hp = cfg.hp || 800;
+        b.hp = cfg.hp || def.hp || 800;
         b.maxHp = b.hp;
         b.targetId = cfg.id;
         b.tags = cfg.tags || [cfg.id, cfg.type];
         b.isEnemyBuilding = true;
+        b.armorType = def.armorType || 'building';
+        b.bonusVs = def.bonusVs || {};
+        b.defense = def;
 
-        // 让它不移动、不被推动，表现上等同于静态建筑
         if (b.body) {
             b.body.setImmovable(true);
             b.body.moves = false;
         }
 
         scene.enemyUnits.add(b);
+
+        // 敌方建筑炮塔属性
+        if (def.range && def.damage) {
+            b.isEnemyTurret = true;
+            b.range = def.range;
+            b.damage = def.damage;
+            b.atkCooldown = def.atkCooldown;
+            b.lastAtkTime = 0;
+            b.splash = !!def.splash;
+        }
+
+        // 敌方建筑刷怪属性
+        if (def.spawner) {
+            b.spawner = Object.assign({}, def.spawner);
+            b.nextSpawn = scene.time.now + b.spawner.interval;
+        }
 
         if (cfg.label) {
             b.label = scene.add.text(cfg.x, cfg.y - 50, `☠️ ${cfg.label}`, {

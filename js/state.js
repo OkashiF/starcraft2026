@@ -89,6 +89,20 @@ StarAbyss.State = {
             console.warn('Save failed:', e);
         }
     },
+    addCores(amount = 1000) {
+        const n = Number(amount);
+        if (!Number.isFinite(n)) return this.totalCores;
+
+        this.totalCores += n;
+        this.save();
+
+        if (StarAbyss.UI && StarAbyss.UI.updateMenuUI) {
+            StarAbyss.UI.updateMenuUI();
+        }
+
+        console.log('[cheat] 当前核心：', this.totalCores);
+        return this.totalCores;
+    },
 
     resetSession(campaignId) {
         const campaign = StarAbyss.Campaigns[campaignId];

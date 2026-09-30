@@ -91,45 +91,39 @@
 
 | 文件 | 职责 |
 |---|---|
-| `index.html` | 页面骨架、DOM 结构、脚本加载入口。包含主菜单层、HUD 层、目标面板（`#objectives-panel`）、剧情弹窗、对话浮层、伤害遮罩、Toast 容器。主菜单右侧为“战前装载”（`#loadout-panel`）。 |
-| `css/style.css` | 全部样式：变量、菜单、HUD、底栏、按钮、小地图、目标/失败条件面板、弹窗、对话浮层、Toast 动画、方舟面板、部门卡、装载槽、卡牌库。 |
+| `index.html` | 页面骨架、DOM 结构、脚本加载入口。包含主菜单层、HUD 层、目标面板（`#objectives-panel`）、剧情弹窗、对话浮层、伤害遮罩、Toast 容器。主菜单右侧为“战前装载”（`#loadout-panel`）。HUD 顶栏新增顶部指挥官技能栏（`#top-skill-bar`），由 `js/ui.js` 的 `renderTopSkillBar` 动态生成。底部生产/建造按钮已扩展新单位与新建筑，未解锁/未携带的按钮会被 `updateUI` 隐藏。 |
+| `css/style.css` | 全部样式：变量、菜单、HUD、底栏、按钮、小地图、目标/失败条件面板、弹窗、对话浮层、Toast 动画、方舟面板、部门卡、装载槽、卡牌库、顶部技能栏（`.top-skill-bar` / `.top-skill-btn`）。 |
 
 ### `js/` 核心
 
 | 文件 | 职责 |
 |---|---|
-| `js/config.js` | 全局通用数值：地图默认尺寸、经济速率、升级成本、单位定义、敌人定义、建筑定义（含 `shield_gen` / `convoy` / `beacon` / `fortress_core`）、指挥官技能、据点默认属性、占领参数、刷怪参数、晋升参数、任务系统默认参数（`OBJECTIVE_DEFAULT` / `FAIL_DEFAULT` / `PROTECT_TARGETS`）。多战役不覆盖的默认值放这里。 |
+| `js/config.js` | 全局通用数值：地图默认尺寸、经济速率、升级成本、状态效果参数（`STATUS`）、单位定义（含 `armorType` / `tags` / `bonusVs` / 医疗 / 修理 / 标记 / 嘲讽 / 狙击等新兵种）、敌人定义（含 `armorType` / `tags` / `bonusVs` / `deathExplosion` / `onHitAcid` 等新敌人）、建筑定义（含新增友方建筑 `flame_turret` / `sniper_turret` / `repair_station` / `radar_station` / `wall` 与敌方建筑 `hive` / `spike` / `spore`）、指挥官技能（含新增 `airdrop` / `shield_field` / `scan` / `nano_repair` / `minefield` / `emp`）、据点默认属性、占领参数、刷怪参数、晋升参数、任务系统默认参数。多战役不覆盖的默认值放这里。 |
 | `js/audio.js` | Web Audio 实时合成音效。`playShoot` / `playExplosion` / `playClick` / `playAlarm`，无外部音频文件。 |
-| `js/state.js` | 存档 + 单局状态。持久化：核心库存、三项旧科技等级（`upgrades`）、战役进度、方舟数据（`ark`：资源、部门等级与节点、库存、战绩、卡牌解锁与装载）。单局：当前战役 id、资源、人口、波次、计时、胜负标记、放置建筑类型、任务统计。提供 `load` / `save` / `resetSession` / `getCurrentCampaign` / `commitCores` / `recordKill` / `recordLoss`。`resetSession` 会读取 `Ark.getBonuses()` 应用开局加成。 |
-| `js/ui.js` | 全部 DOM 操作集中处（方舟面板除外，见 `arkUI.js`）。HUD 刷新、目标 / 失败条件面板刷新（`renderObjectivesPanel`）、菜单核心库存与旧科技按钮刷新（`updateMenuUI`，已做空值保护）、战役列表渲染（`renderMissionList`）、选择卡片、单位技能栏、Toast、受击闪红、对话浮层、剧情/结算弹窗。`renderArkPanel` 现转发到 `StarAbyss.ArkUI.render()`。`updateUI` 中所有生产 / 建造 / 技能按钮的 `disabled` 会先经 `Ark.canBuild` / `Ark.canUseSkill` 过滤未携带卡牌。 |
+| `js/state.js` | 存档 + 单局状态。持久化：核心库存、三项科技等级（`upgrades`，由方舟科研实验室节点通过 `legacyKey` 同步写入）、战役进度、方舟数据（`ark`：资源、部门等级与节点、库存、战绩、卡牌解锁与装载）。单局：当前战役 id、资源、人口、波次、计时、胜负标记、放置建筑类型、任务统计。提供 `load` / `save` / `resetSession` / `getCurrentCampaign` / `commitCores` / `recordKill` / `recordLoss`。`resetSession` 会读取 `Ark.getBonuses()` 应用开局加成。 |
+| `js/ui.js` | 全部 DOM 操作集中处（方舟面板除外，见 `arkUI.js`）。HUD 刷新、目标 / 失败条件面板刷新（`renderObjectivesPanel`）、菜单核心库存与旧科技按钮刷新（`updateMenuUI`）、战役列表渲染（`renderMissionList`）、选择卡片、单位技能栏、Toast、受击闪红、对话浮层、剧情/结算弹窗。`renderArkPanel` 转发到 `StarAbyss.ArkUI.render()`。`updateUI` 中所有生产 / 建造按钮会先经 `Ark.canBuild` 过滤：未解锁或未携带的单位/建筑按钮直接 `display:none`；补给电站无卡牌，始终显示。新增 `renderTopSkillBar`：只渲染已解锁且已携带的指挥官技能卡，按资源是否足够决定禁用，快捷键沿用 `R/T/Y/U/I/O/P/G`。 |
 | `js/arkUI.js` | 方舟与装载界面渲染。`renderLoadout`：主菜单右侧“战前装载”，显示卡槽占用、卡牌库、点击携带/卸下；按 `slotCost` 累加已占用格，支持占 2 格的卡牌。`render`：方舟母舰面板，按部门渲染等级、节点列表、升级按钮。`toggleCard` / `unequip` / `upgradeDepartment` / `upgradeNode` 为 `onclick` 入口。跨模块入口 `StarAbyss.ArkUI`。 |
-| `js/textures.js` | 用 Phaser Graphics 程序化生成所有矢量纹理（基地、补给站、炮塔、四种友军、三种敌人、据点、子弹、火焰、粒子、护盾发生器 / 要塞核心 `tex_shield_gen`、运输车 `tex_convoy`、方舟信标 `tex_beacon`）。 |
-| `js/entities.js` | `UnitFactory`（生成友军/敌人，`spawnEnemy` 支持传入 `tags` 用于 `destroy_target` 目标统计）与 `BuildingFactory`（放置建筑，`spawnProtectTarget` 生成友方保护目标、`spawnEnemyBuilding` 生成敌方关键建筑）。单位属性从 `config.js` + 当前科技等级计算。注意：实体层不做卡牌校验，卡牌校验在 `App.triggerBuild` / `App.selectBuildingToPlace` / `UI.updateUI` 中。 |
-| `js/app.js` | 应用流程控制。初始化菜单、准备战役、开始游戏、触发生产 / 放置建筑 / 指挥官技能（均先经 `Ark.canBuild` / `Ark.canUseSkill` 校验）、结算胜负、返回菜单、打开/关闭方舟面板。`initMenu` 会调用 `ArkUI.renderLoadout` 渲染战前装载。`buyUpgrade` 保留兼容，转发到 `Ark.upgradeNode`。`window.gameApp` 供 HTML `onclick` 使用。 |
-| `js/scene.js` | `MainScene`。负责场景组装：设置世界边界、背景网格、实例化所有 system 与 factory、按当前战役初始化地图（生成保护目标、敌方关键建筑、车队、区域）、`update` 中依次调用各 system。 |
+| `js/textures.js` | 用 Phaser Graphics 程序化生成所有矢量纹理（基地、补给站、炮塔、四种友军、三种敌人、据点、子弹、火焰、粒子、护盾发生器 / 要塞核心 `tex_shield_gen`、运输车 `tex_convoy`、方舟信标 `tex_beacon`）。新增纹理：`tex_rocketeer` / `tex_medic` / `tex_engineer` / `tex_drone` / `tex_shieldman` / `tex_sniper` / `tex_rocket` / `tex_acid` / `tex_flame_turret` / `tex_sniper_turret` / `tex_repair_station` / `tex_radar_station` / `tex_wall` / `tex_reaper` / `tex_acidspitter` / `tex_crystalspike` / `tex_flier` / `tex_hive` / `tex_spike` / `tex_spore` / `tex_mine`。 |
+| `js/app.js` | 应用流程控制。初始化菜单、准备战役、开始游戏、触发生产 / 放置建筑 / 指挥官技能（均先经 `Ark.canBuild` / `Ark.canUseSkill` 校验）、结算胜负、返回菜单、打开/关闭方舟面板。`initMenu` 会调用 `ArkUI.renderLoadout` 渲染战前装载。`buyUpgrade` 保留兼容，转发到 `Ark.upgradeNode`。`selectBuildingToPlace` 支持新建筑名称。`window.gameApp` 供 HTML `onclick` 使用。 |
+| `js/entities.js` | `UnitFactory`（生成友军/敌人）。`spawnFriendly(type, x, y, isFree, opts)` 第 5 参 `opts.lifetime` 用于临时召唤物（空投增援等）。`spawnEnemy(type, x, y, tags, priority)` 第 4 参 `tags` 用于 `destroy_target` 目标统计，第 5 参 `priority` 写入 `enemy.attackPriority` 供 `enemyAI.js` 索敌分支。`_initCommon` 初始化 `armorType` / `tags` / `bonusVs` / `status`（stun / slow / burn / mark / shield）。`BuildingFactory` 放置建筑，`spawnProtectTarget` 生成友方保护目标、`spawnEnemyBuilding` 生成敌方关键建筑，支持敌方建筑炮塔（`isEnemyTurret`）与刷怪（`spawner`）。 |
+| `js/scene.js` | `MainScene`。负责场景组装：设置世界边界、背景网格、实例化所有 system 与 factory、按当前战役初始化地图（生成保护目标、敌方关键建筑、车队、区域）、`update` 中依次调用各 system。车队由 `_spawnConvoy` 生成、`_updateConvoy` 沿 `waypoints` 移动；waypoint 支持 `dwell`（停留秒数）与 `label`（标签），到达带 `dwell` 的点时车队原地停留，倒计时结束再前进。 |
 
 ### `js/data/` 数据层
 
 | 文件 | 职责 |
 |---|---|
-| `js/data/campaigns.js` | 所有战役定义。每个战役含：id、名称、副标题、简报 HTML、解锁条件、地图（尺寸、基地/补给站坐标、据点列表）、开局资源与人口、初始单位、波次表、目标列表、失败条件列表（`failConditions`）、奖励、胜负文案、脚本触发表。可选字段：`zones`（区域）、`convoy`（护送车队）、`protectTargets`（保护目标）、`enemyBuildings`（敌方关键建筑）、`phases`（多阶段任务）、`arkLoot`：该战役胜利/失败时发放的方舟资源，未定义则用 `ArkData.DEFAULT_LOOT`。 |
+| `js/data/campaigns.js` | 所有战役定义。每个战役含：id、名称、副标题、简报 HTML、解锁条件、地图（尺寸、基地/补给站坐标、据点列表）、开局资源与人口、初始单位、波次表、目标列表、失败条件列表（`failConditions`）、奖励、胜负文案、脚本触发表。可选字段：`zones`（区域）、`convoy`（护送车队）、`protectTargets`（保护目标）、`enemyBuildings`（敌方关键建筑）、`phases`（多阶段任务）、`arkLoot`：该战役胜利/失败时发放的方舟资源，未定义则用 `ArkData.DEFAULT_LOOT`。波次项支持 `boss: true` 表示 Boss 波。 |
 | `js/data/dialogues.js` | 所有对话文本。按 id 索引，含 `speaker` 与 `text`。战役脚本通过 id 引用。 |
-| `js/data/ark.js` | 方舟数据定义。`ArkData.DEPARTMENTS`：部门 id、名称、图标、描述、最大等级、部门升级成本数组、每级 `bonusPerLevel`、以及多升级节点 `upgrades[]`（每个节点含 `id` / `name` / `desc` / `maxLevel` / `cost` / `requires` / `effects` / `unlocks`）。`ArkData.CARDS`：统一卡牌定义（`unit` / `building` / `skill`），含 `id` / `type` / `name` / `slotCost` / `buildKey` 或 `skillKey` / `defaultUnlocked` / `unlockBy` / `desc`。`ArkData.LOADOUT`：`baseSlots` / `maxSlots` / `allowDuplicate` / `defaultEquipped`。`ArkData.DEFAULT_LOOT`：战役胜负默认发放的方舟资源（合金/数据/补给）。 |
-
-### `js/systems/` 系统层
-
-| 文件 | 职责 |
-|---|---|
+| `js/data/ark.js` | 方舟数据定义。`ArkData.DEPARTMENTS`：部门 id、名称、图标、描述、最大等级、部门升级成本数组、每级 `bonusPerLevel`、以及多升级节点 `upgrades[]`（每个节点含 `id` / `name` / `desc` / `maxLevel` / `cost` / `requires` / `effects` / `unlocks`；可选 `legacyKey`，升级时同步写入 `State.upgrades[legacyKey]`）。`research.upgrades` 已并入原主菜单旧三项科技：`node_infantryHp`（`legacyKey: 'infantryHp'`）、`node_mechAtk`（`legacyKey: 'mechAtk'`）、`node_economy`（`legacyKey: 'economy'`），各 `maxLevel: 3`、`cost: [2, 5, 10]`、`requires: { deptLevel: 1 }`。新增大量解锁节点：兵营 `unlock_medic` / `unlock_engineer`，机库 `unlock_drone` / `unlock_airdrop`，科研 `unlock_rocketeer` / `unlock_shieldman` / `unlock_sniper` / `unlock_flame_turret` / `unlock_sniper_turret`，工程 `unlock_repair_station` / `unlock_wall` / `unlock_nano_repair` / `unlock_minefield`，情报 `unlock_radar_station`，舰桥 `unlock_shield_field` / `unlock_scan`，动力 `unlock_emp`。`ArkData.CARDS`：统一卡牌定义（`unit` / `building` / `skill`），含 `id` / `type` / `name` / `slotCost` / `buildKey` 或 `skillKey` / `defaultUnlocked` / `unlockBy` / `desc`。新增大量单位卡、建筑卡、技能卡。`ArkData.LOADOUT`：`baseSlots` / `maxSlots` / `allowDuplicate` / `defaultEquipped`。`ArkData.DEFAULT_LOOT`：战役胜负默认发放的方舟资源（合金/数据/补给）。 |
 | `js/systems/unlock.js` | 战役解锁与进度。判断某战役是否解锁、生成锁定原因、确保进度条目、标记完成、累加核心、列出全部战役。 |
-| `js/systems/ark.js` | 方舟系统入口。`ensureState` 补全存档方舟结构（资源、部门、部门节点、卡牌解锁、装载、默认装备），自动兼容旧档；`getBonuses` 汇总所有部门等级 + 节点 `effects` 提供的战斗加成；`getDepartmentInfo` 返回单个部门等级与所有节点升级信息；`upgradeDepartment` 消耗 `totalCores` 升级部门；`upgradeNode` 消耗 `totalCores` 升级节点并处理 `unlocks.cards`；`getCard` / `isCardUnlocked` / `getLoadout` / `getUsedSlots` / `getMaxSlots` / `isEquipped` / `canEquip` / `equipCard` / `unequipCard` 管理卡牌与装载；`canBuild(buildKey)` / `canUseSkill(skillKey)` 供战斗与 UI 校验；`grantBattleLoot` 战役结算发放方舟资源。跨模块通过 `StarAbyss.Ark` 访问。 |
 | `js/systems/vfx.js` | 特效：环境粒子、枪口焰、命中爆点、死亡爆炸。 |
-| `js/systems/combat.js` | 友军攻击逻辑、炮塔攻击、弹道生成、命中判定、敌人受伤与死亡、击杀统计（`recordKill`）、经验与晋升、保护目标受伤与摧毁（`damageBuilding` / `_destroyBuilding`）、坦克架设切换、指挥官技能（轨道打击 / 战场维修，`activateCommanderSkill` 开头会调 `Ark.canUseSkill` 二次校验）。 |
-| `js/systems/enemyAI.js` | 敌人追踪与攻击。优先攻击附近友军，其次攻击保护目标（信标、护盾发生器、车队），否则进攻指挥中心。跳过敌方建筑（`isEnemyBuilding`）。 基地被摧毁时触发失败。 |
-| `js/systems/wave.js` | 资源每秒增长（叠加 `Ark.getBonuses()` 的 `econMineralsPerSec` / `econGasPerSec`）、单局计时（`battleElapsed`）、据点持续收益、波次计时、按当前战役的波次表刷怪、据点占领判定、血条与占领进度条绘制（含车队、保护目标）。 |
+| `js/systems/combat.js` | 友军攻击逻辑、炮塔攻击、弹道生成、命中判定、敌人受伤与死亡、击杀统计（`recordKill`）、经验与晋升、保护目标受伤与摧毁（`damageBuilding` / `_destroyBuilding`）、坦克架设切换、指挥官技能（含新增 `airdrop` / `shield_field` / `scan` / `nano_repair` / `minefield` / `emp`）。新增：伤害计算 `computeDamage`（armorType + bonusVs + mark）、状态效果处理 `_processStatus`（灼烧 / 酸液 / 护盾）、医疗兵治疗、工程师修理、无人机标记、盾卫嘲讽、地雷阵、酸液区域、纳米修复区域、敌方建筑炮塔与刷怪。 |
+| `js/systems/enemyAI.js` | 敌人追踪与攻击。按 `enemy.attackPriority` 分支：`'default'`（或未设）保持原逻辑（附近友军 120px > 保护目标 200px > 指挥中心）；`'protect'` 无视距离扑向最近保护目标（信标、护盾发生器、车队），仅友军 80px 内转火，无保护目标时回落到指挥中心；`'base'` 无视距离扑向指挥中心，仅友军/保护目标 80px 内转火。跳过敌方建筑（`isEnemyBuilding`）。基地被摧毁时触发失败。新增：眩晕 / 减速状态处理、盾卫嘲讽优先、酸蚀者命中生成酸液区域。 |
+| `js/systems/wave.js` | 资源每秒增长（叠加 `Ark.getBonuses()` 的 `econMineralsPerSec` / `econGasPerSec`）、单局计时（`battleElapsed`）、据点持续收益、波次计时、按当前战役的波次表刷怪、据点占领判定、血条与占领进度条绘制（含车队、保护目标、敌方建筑）。支持 `waves[].boss: true`：该波敌人放大 1.6 倍、HP ×3、伤害 ×1.5，并写入 `tags: ['boss']`。 |
 | `js/systems/zone.js` | 区域系统。 `init(campaign)` 读取 `zones` 生成区域；`update` 判定玩家 / 敌人在区域内外的进出事件、占领进度、驻留计时；`getZone` / `getZoneOwner` / `_insideZone` 供 `objective.js` 与 `script.js` 查询。 |
 | `js/systems/objective.js` | 任务系统核心。 支持多目标类型：`survive_waves` / `survive_time` / `capture_all_nodes` / `capture_node` / `hold_zone` / `reach_zone` / `extract_units` / `protect_target` / `destroy_target` / `kill_count` / `boss_kill` / `composite`。支持失败条件：`base_destroyed` / `target_destroyed` / `target_dead` / `timeout` / `friendly_loss_limit` / `ally_all_dead` / `zone_lost`。支持 `phases` 多阶段。全部完成触发胜利，失败条件触发 `gameOver(false, failReason)`。 |
 | `js/systems/script.js` | 战役脚本触发。监听 `onStart` / `onWave` / `onNodeCaptured` / `onObjectiveComplete` / `onTargetDestroyed` / `onUnitEnterZone` / `onZoneCaptured` / `onTimer` / `onAllyEvent`，命中后播放对应对话或执行 action。每个脚本只触发一次。 |
-| `js/systems/input.js` | 框选、右键移动、建筑放置、快捷键 1–6 / R / T / E。 |
+| `js/systems/input.js` | 框选、右键移动、建筑放置、快捷键。快捷键更新：`1–0` 生产新单位（陆战队 / 火蝠 / 幽灵 / 坦克 / 火箭兵 / 医疗兵 / 工程师 / 无人机 / 盾卫 / 狙击手），`Q/W/A/S/D/F` 放置新建筑（自动炮塔 / 火焰塔 / 狙击塔 / 维修站 / 雷达站 / 障碍墙），`R/T/Y/U/I/O/P/G` 释放指挥官技能（轨道打击 / 战场维修 / 空投增援 / 护盾场 / 侦察扫描 / 纳米修复 / 地雷阵 / 电磁脉冲），`E` 切换坦克架设。 |
 | `js/systems/camera.js` | 方向键与 WASD 平移镜头。 |
 | `js/systems/minimap.js` | 小地图绘制（建筑、友军、敌军、区域、车队、保护目标、敌方关键建筑、镜头框）与点击/拖拽跳转镜头。 |
 
@@ -142,16 +136,19 @@
 | 想改的内容 | 要动的文件 |
 |---|---|
 | 单位价格、血量、伤害、射程、攻速、弹道速度 | `js/config.js`（`UNITS`） |
+| 单位护甲类型、标签、克制倍率 | `js/config.js`（`UNITS[].armorType` / `tags` / `bonusVs`） |
 | 敌人血量、速度、伤害、经验、掉核心概率 | `js/config.js`（`ENEMIES`） |
+| 敌人护甲类型、标签、克制倍率、死亡爆炸、酸液命中 | `js/config.js`（`ENEMIES[].armorType` / `tags` / `bonusVs` / `deathExplosion` / `onHitAcid`） |
 | 建筑血量、造价、炮塔射程/伤害/攻速 | `js/config.js`（`BUILDINGS`） |
 | 保护目标（护盾发生器、运输车、信标、要塞核心）血量/纹理 | `js/config.js`（`BUILDINGS`） |
 | 指挥官技能消耗与效果 | `js/config.js`（`SKILLS`） |
+| 状态效果参数（减速倍率、标记受伤倍率） | `js/config.js`（`STATUS`） |
 | 每秒资源、经济科技加成 | `js/config.js`（`ECON`） |
 | 旧三项科技升级成本 | `js/config.js`（`UPGRADE_COSTS`） |
 | 占领速度、衰减、雷达核心概率、热能泉瓦斯加成 | `js/config.js`（`CAPTURE`） |
 | 晋升经验门槛与加成 | `js/config.js`（`PROMOTION`） |
 | 保护目标标签与颜色 | `js/config.js`（`PROTECT_TARGETS`） |
-| 单个战役的开局资源、人口、波次间隔 | `js/data/campaigns.js`（对应战役的 `start` 与 `waves`） |
+| 单个战役的开局资源、人口、波次间隔、Boss 波 | `js/data/campaigns.js`（对应战役的 `start` 与 `waves`，波次项可加 `boss: true`） |
 | 部门数量、名称、图标、描述 | `js/data/ark.js`（`DEPARTMENTS`） |
 | 部门等级成本、每级加成 | `js/data/ark.js`（`DEPARTMENTS[id].upgradeCost` / `bonusPerLevel`） |
 | 部门下的多升级节点（成本、前置、效果、解锁） | `js/data/ark.js`（`DEPARTMENTS[id].upgrades[]`） |
@@ -164,12 +161,17 @@
 
 | 想加的内容 | 要动的文件 |
 |---|---|
-| 新增一个友军兵种 | `js/config.js`（加定义）→ `js/textures.js`（加纹理）→ `index.html`（加按钮）→ `js/data/ark.js`（加 `CARDS` 条目）→ `js/ui.js`（按钮 enable 判定已通用）→ `js/app.js` 快捷键可选 |
-| 新增一个敌人类型 | `js/config.js`（加定义）→ `js/textures.js`（加纹理）→ `js/data/campaigns.js`（写进某波 `types`） |
-| 新增一个可建造建筑 | `js/config.js`（加定义）→ `js/textures.js`（加纹理）→ `index.html`（加按钮）→ `js/data/ark.js`（加 `CARDS` 条目）→ `js/entities.js`（`BuildingFactory` 分支）→ `js/ui.js`（按钮判定） |
+| 新增一个友军兵种 | `js/config.js`（加定义，含 `armorType` / `tags` / `bonusVs` / 特殊字段）→ `js/textures.js`（加纹理）→ `index.html`（加按钮）→ `js/data/ark.js`（加 `CARDS` 条目与解锁节点）→ `js/ui.js`（按钮显隐与 enable 判定已通用）→ `js/app.js` 快捷键可选 |
+| 新增一个敌人类型 | `js/config.js`（加定义，含 `armorType` / `tags` / `bonusVs` / 特殊字段）→ `js/textures.js`（加纹理）→ `js/data/campaigns.js`（写进某波 `types`） |
+| 新增一个可建造建筑 | `js/config.js`（加定义）→ `js/textures.js`（加纹理）→ `index.html`（加按钮）→ `js/data/ark.js`（加 `CARDS` 条目与解锁节点）→ `js/entities.js`（`BuildingFactory` 分支已通用）→ `js/ui.js`（按钮显隐已通用） |
 | 新增一个保护目标建筑 | `js/config.js`（`BUILDINGS` 加定义）→ `js/textures.js`（加纹理）→ `js/data/campaigns.js`（该战役 `protectTargets`） |
-| 新增一个敌方关键建筑 | `js/config.js`（`BUILDINGS` 加定义）→ `js/textures.js`（加纹理）→ `js/data/campaigns.js`（该战役 `enemyBuildings`） |
+| 新增一个敌方关键建筑 | `js/config.js`（`BUILDINGS` 加定义，可含 `range` / `damage` / `spawner`）→ `js/textures.js`（加纹理）→ `js/data/campaigns.js`（该战役 `enemyBuildings`）→ `js/entities.js`（`spawnEnemyBuilding` 已支持炮塔与刷怪） |
 | 调整单位升级加成 | `js/config.js`（`hpPerUpgrade` / `damagePerUpgrade`） |
+| 新增状态效果 | `js/config.js`（`STATUS`）+ `js/entities.js`（`_initCommon` 初始化 `status`）+ `js/systems/combat.js`（伤害计算 / 状态处理）+ `js/systems/enemyAI.js`（眩晕 / 减速） |
+| 新增光环 / 治疗 / 修理 / 标记 / 嘲讽 | `js/config.js`（单位定义加 `isHealer` / `isRepairer` / `isMarker` / `isTaunt` 等）+ `js/systems/combat.js`（友军 update）+ `js/systems/enemyAI.js`（嘲讽优先） |
+| 新增临时召唤物 | `js/config.js`（单位定义）+ `js/entities.js`（`spawnFriendly` 支持 `opts.lifetime`）+ `js/systems/combat.js`（技能生成） |
+| 新增地雷 / 酸液 / 纳米区域 | `js/config.js`（技能或敌人定义）+ `js/systems/combat.js`（`_mines` / `_acidZones` / `_nanoZones`） |
+| 新增 Boss 波 | `js/data/campaigns.js`（波次项加 `boss: true`）+ `js/systems/wave.js`（已支持放大与属性加成） |
 
 ### 战役内容
 
@@ -178,13 +180,13 @@
 | 新增一个战役 | 只改 `js/data/campaigns.js`（追加对象）；如需对话再改 `js/data/dialogues.js` |
 | 调整某战役地图尺寸/基地位置/据点位置 | `js/data/campaigns.js`（该战役的 `map`） |
 | 调整某战役初始单位 | `js/data/campaigns.js`（`initialUnits`） |
-| 调整某战役波次组成、数量、间隔 | `js/data/campaigns.js`（`waves`） |
+| 调整某战役波次组成、数量、间隔、攻击优先级、Boss 波 | `js/data/campaigns.js`（`waves` 的 `count` / `types` / `interval` / `priority` / `boss`） |
 | 改某战役目标 | `js/data/campaigns.js`（`objectives`），必要时扩 `js/systems/objective.js` |
 | 加失败条件 | `js/data/campaigns.js`（`failConditions`），必要时扩 `js/systems/objective.js`（`_checkFail`） |
 | 加区域（撤离区/保护区/占领区） | `js/data/campaigns.js`（`zones`）→ `js/systems/zone.js` 已支持 |
-| 加护送车队 | `js/data/campaigns.js`（`convoy`）→ `js/scene.js`（`_spawnConvoy` 已支持） |
+| 加护送车队 | `js/data/campaigns.js`（`convoy`，waypoint 支持 `dwell` 停留秒数 / `label` 标签）→ `js/scene.js`（`_spawnConvoy` / `_updateConvoy` 已支持停留） |
 | 加保护目标 | `js/data/campaigns.js`（`protectTargets`）→ `js/entities.js`（`spawnProtectTarget` 已支持） |
-| 加敌方关键建筑 | `js/data/campaigns.js`（`enemyBuildings`）→ `js/entities.js`（`spawnEnemyBuilding` 已支持） |
+| 加敌方关键建筑 | `js/data/campaigns.js`（`enemyBuildings`）→ `js/entities.js`（`spawnEnemyBuilding` 已支持炮塔与刷怪） |
 | 改某战役胜负文案 | `js/data/campaigns.js`（`victoryText` / `defeatText`） |
 | 加战役内对话 | `js/data/dialogues.js`（加条目）+ `js/data/campaigns.js`（`scripts` 引用） |
 | 加新的脚本触发类型 | `js/systems/script.js`（扩展 `_matches`）+ 对应系统发事件 |
@@ -204,11 +206,11 @@
 | 节点解锁某张卡牌 | `js/data/ark.js`（节点加 `unlocks.cards: ['xxx']`） |
 | 节点提供全局加成 | `js/data/ark.js`（节点加 `effects: [{ key, value }]`）+ `js/systems/ark.js`（`getBonuses` 已汇总）+ 使用处（如 `state.js` / `wave.js` / `entities.js`） |
 | 节点前置条件 | `js/data/ark.js`（节点加 `requires: { deptLevel, nodes }`） |
-| 新增一张卡牌 | `js/data/ark.js`（`CARDS` 加条目）+ 若为新单位/建筑则按"单位/建筑"流程补 `config.js` / `textures.js` / `index.html` |
+| 新增一张卡牌 | `js/data/ark.js`（`CARDS` 加条目）+ 若为新单位/建筑则按“单位/建筑”流程补 `config.js` / `textures.js` / `index.html` |
 | 调整卡槽基础数 / 上限 / 默认装备 | `js/data/ark.js`（`LOADOUT`） |
 | 调整卡槽扩容节点 | `js/data/ark.js`（对应节点的 `effects: [{ key: 'loadoutSlot', value: 1 }]`） |
 | 卡牌携带校验（建造/技能） | `js/systems/ark.js`（`canBuild` / `canUseSkill`）+ `js/app.js` + `js/ui.js`（均已接入） |
-| 旧三项科技迁入科研实验室 | `js/data/ark.js`（在 `research.upgrades` 中补节点）；`js/app.js`（`buyUpgrade` 中已有转发映射，可按需调整） |
+| 新增方舟资源类型 | `js/state.js`（`ark.resources`）+ `js/systems/ark.js`（`ensureState` 补全）+ `index.html`（资源条） |
 
 ### UI / 流程
 
@@ -219,9 +221,10 @@
 | 战役列表渲染逻辑 | `js/ui.js`（`renderMissionList`） |
 | 战前装载面板布局与卡槽 | `index.html`（`#loadout-panel`）+ `css/style.css`（`.loadout-*`、`.card-*`）+ `js/arkUI.js`（`renderLoadout` / `toggleCard` / `unequip`） |
 | HUD 顶栏资源显示 | `index.html` + `js/ui.js`（`updateUI`） |
+| 顶部指挥官技能栏 | `index.html`（`#top-skill-bar`）+ `css/style.css`（`.top-skill-bar` / `.top-skill-btn`）+ `js/ui.js`（`renderTopSkillBar`） |
+| 底部生产/建造按钮显隐与禁用 | `js/ui.js`（`updateUI` 中 `refreshUnitBtn` / `refreshBuildingBtn`）+ `index.html`（按钮 ID）+ `js/systems/ark.js`（`canBuild`） |
 | 目标 / 失败条件面板样式 | `css/style.css`（`.objectives-panel`、`.obj-title`、`.obj-row`） |
 | 目标 / 失败条件面板渲染 | `js/ui.js`（`renderObjectivesPanel`）+ `js/systems/objective.js`（`describeObjectives` / `describeFailConditions`） |
-| 底栏生产/建造按钮 | `index.html` + `js/ui.js`（`updateUI` 里的 enable 判定，已叠加 `Ark.canBuild`） |
 | 选择卡片、单位技能栏 | `js/ui.js`（`updateSelectionCard`、`_renderUnitSkills`） |
 | 剧情简报弹窗 | `js/ui.js`（`showStoryModal`）+ `js/app.js`（`prepareMission`） |
 | 结算弹窗 | `js/ui.js`（`showStoryModal`）+ `js/app.js`（`gameOver`） |
@@ -238,11 +241,21 @@
 | 想改的内容 | 要动的文件 |
 |---|---|
 | 单位索敌与开火行为 | `js/systems/combat.js` |
-| 炮塔攻击行为 | `js/systems/combat.js` |
+| 伤害计算（护甲类型 / 克制 / 标记） | `js/systems/combat.js`（`computeDamage`） |
+| 状态效果（眩晕 / 减速 / 灼烧 / 标记 / 护盾） | `js/entities.js`（`_initCommon`）+ `js/systems/combat.js`（`_processStatus`）+ `js/systems/enemyAI.js`（眩晕 / 减速） |
+| 医疗兵治疗 | `js/config.js`（`isHealer` / `healAmount` / `healRange`）+ `js/systems/combat.js` |
+| 工程师修理 | `js/config.js`（`isRepairer` / `repairAmount` / `repairRange`）+ `js/systems/combat.js` |
+| 侦察无人机标记 | `js/config.js`（`isMarker` / `markerRange` / `markerDuration`）+ `js/systems/combat.js` |
+| 盾卫嘲讽 | `js/config.js`（`isTaunt` / `tauntRange`）+ `js/systems/enemyAI.js` |
+| 地雷阵 / 酸液区域 / 纳米修复区域 | `js/systems/combat.js`（`_mines` / `_acidZones` / `_nanoZones`）+ `js/config.js`（对应技能或敌人定义） |
+| 炮塔攻击行为（友方 / 敌方） | `js/systems/combat.js` |
+| 敌方建筑炮塔与刷怪 | `js/entities.js`（`spawnEnemyBuilding`）+ `js/systems/combat.js`（敌方建筑炮塔与刷怪） |
 | 保护目标受伤与摧毁 | `js/systems/combat.js`（`damageBuilding` / `_destroyBuilding`） |
 | 击杀统计（供 destroy_target 用） | `js/systems/combat.js`（`_killEnemy` / `_destroyBuilding` 调 `State.recordKill`） |
-| 敌人 AI 行为 | `js/systems/enemyAI.js` |
-| 敌人攻击保护目标 / 车队 | `js/systems/enemyAI.js`（`protectTargets` 收集逻辑） |
+| 敌人 AI 行为 | `js/systems/enemyAI.js`（按 `enemy.attackPriority` 分支：default / protect / base） |
+| 敌人攻击保护目标 / 车队 | `js/systems/enemyAI.js`（`protectTargets` 收集逻辑 + `attackPriority` 分支；`protect` 无视距离扑向最近保护目标） |
+| 波次攻击优先级 | `js/data/campaigns.js`（`waves[].priority`）+ `js/systems/wave.js`（`triggerNextWave` 传入 `spawnEnemy`）+ `js/entities.js`（`spawnEnemy` 写入 `enemy.attackPriority`） |
+| Boss 波 | `js/data/campaigns.js`（`waves[].boss: true`）+ `js/systems/wave.js`（放大与属性加成） |
 | 刷怪规则、资源增长、据点占领 | `js/systems/wave.js` |
 | 单局计时 `battleElapsed` | `js/systems/wave.js`（每秒 `+1`）+ `js/state.js`（`resetSession` 归零） |
 | 区域判定、占领、进出事件 | `js/systems/zone.js` |
@@ -253,7 +266,8 @@
 | 小地图绘制与跳转 | `js/systems/minimap.js` |
 | 粒子与爆炸表现 | `js/systems/vfx.js` |
 | 场景初始化、system 装配 | `js/scene.js` |
-| 车队移动逻辑 | `js/scene.js`（`_spawnConvoy` / `_updateConvoy`） |
+| 车队移动逻辑 | `js/scene.js`（`_spawnConvoy` / `_updateConvoy`，waypoint 支持 `dwell` 停留 / `label` 标签） |
+| 旧科技等级同步 | `js/systems/ark.js`（`upgradeNode` 读 `nodeDef.legacyKey` 写入 `State.upgrades`） |
 | 方舟加成汇总规则 | `js/systems/ark.js`（`getBonuses`：部门等级 + 节点 `effects`） |
 | 部门升级流程 | `js/systems/ark.js`（`upgradeDepartment`）+ `js/arkUI.js`（`render`） |
 | 部门节点升级流程 | `js/systems/ark.js`（`upgradeNode`）+ `js/arkUI.js`（`upgradeNode`） |
@@ -293,7 +307,7 @@
 - `map`：`width`、`height`、`base`、`depot`、`nodes[]`（每项含 `type`、`x`、`y`）
 - `start`：`minerals`、`gas`、`maxSupply`、`waveTimer`
 - `initialUnits[]`：`type` + `dx` / `dy`
-- `waves[]`：每项 `count`、`types[]`、`interval`
+- `waves[]`：每项 `count`、`types[]`、`interval`、可选 `priority`（`'default'` / `'protect'` / `'base'`，控制该波敌人的索敌优先级；缺省 `'default'`）、可选 `boss: true`（Boss 波，敌人放大 1.6 倍、HP ×3、伤害 ×1.5）
 - `objectives[]`：见下
 - `failConditions[]`：见下
 - `rewards`：`coresPerWin`
@@ -305,7 +319,7 @@
 - `zones[]`：区域（撤离区、保护区、占领区）
 - `convoy`：护送车队定义
 - `protectTargets[]`：友方保护目标（信标、护盾发生器）
-- `enemyBuildings[]`：敌方关键建筑（要塞核心、护盾发生器）
+- `enemyBuildings[]`：敌方关键建筑（要塞核心、护盾发生器、虫巢、地刺、孢子炮等）
 - `phases[]`：多阶段任务（每阶段自己的 `objectives`）
 
 **目标类型（`objectives[]` 每项）：**
@@ -351,7 +365,11 @@
 {
     count: 3,
     startX, startY, dx, speed,
-    waypoints: [{ x, y }, ...],
+    hp,                                   // 可选，运输车血量，默认 400
+    waypoints: [
+        { x, y, dwell?, label? },         // dwell: 停留秒数；label: 途经点标签
+        ...
+    ],
 }
 ```
 
@@ -400,17 +418,21 @@ arkLoot: {
 ## 八、已知限制
 
 - 科技升级目前全局共享，未按战役分桶。
-- 星级评价目前只有“胜利即 3 星”，未实现按用时 / 损失 / 核心数计算。
-- 波次表为静态数组，尚无随机事件 / Boss 波 / 增援机制。
+- 星级评价目前只有“胜利即 3 星”，未实现按用时 / 损失 / 核心计算。
+- 波次表为静态数组，Boss 波已支持，但随机事件 / 增援机制仍无。
 - 地形仅背景网格，区域（`zones`）已支持占领与进出事件，但无阻挡格、无高低差、无寻路。
-- 敌人 AI 为直线追踪，无绕行与编队。
-- 敌方关键建筑（护盾发生器、要塞核心）目前用 `tex_shield_gen` 复用纹理，尚无专属外观。
+- 敌人 AI 为直线追踪，无绕行与编队；已支持盾卫嘲讽与眩晕 / 减速状态。
+- 敌方关键建筑（护盾发生器、要塞核心）仍复用 `tex_shield_gen`，但虫巢 / 地刺 / 孢子炮已有专属纹理。
 - `protect_target` 目标必须配合 `untilObjective` 或 `seconds` 才有意义，否则会开局即完成。
 - `minimap.js` 已按当前战役地图尺寸动态计算比例和点击映射；但小地图 canvas 内部坐标系固定为 140×140，若改 CSS 显示尺寸无需改代码，若改 canvas `width/height` 属性需同步更新 `minimap.js` 中的 140 常量。
-- 方舟目前有 10 个部门：舰桥指挥中心、科研实验室、兵营训练舱、机库军械库、工程制造局、动力核心、情报通讯、医疗冻眠舱、生活娱乐、后勤仓储。只有舰桥、科研、工程、后勤四个部门有升级节点或每级加成，其余部门暂为空壳（仅显示等级，无实际效果）。
+- 方舟目前有 10 个部门：舰桥指挥中心、科研实验室、兵营训练舱、机库军械库、工程制造局、动力核心、情报通讯、医疗冻眠舱、生活娱乐、后勤仓储。舰桥、科研、兵营、机库、工程、动力、情报已有升级节点，医疗、生活仍为空壳（仅显示等级，无实际效果）。
 - 方舟家具/设备/装修网格/套装/老兵空投尚未实现。
-- 方舟资源只有核心、合金、数据、补给四类，暂无电力、算力、士气、声望。
-- 卡牌系统目前只有 3 张初始卡（陆战队员、火蝠、自动炮塔）+ 2 张需解锁单位卡（幽灵、坦克）+ 2 张需解锁技能卡（轨道打击、战场维修），暂无建筑卡扩展、载具卡、遗物卡。
-- 卡槽基础 3 格、上限 8 格，扩容节点只做了 3 级；卡片升级（例如陆战队员卡 Lv.1→Lv.5）尚未实现。
-- 旧三项科技（`infantryHp` / `mechAtk` / `economy`）仍保留在 `State.upgrades` 中并被实体、经济读取，尚未在方舟科研实验室里建立对应节点；`App.buyUpgrade` 中的转发映射指向了尚未创建的节点 id（`node_infantryHp` 等），调用会静默失败。
+- 方舟资源只有核心、合金、数据、补给四类，暂无电力、算力、士气、声望，且目前用于升级项的资源仅核心，未配置升级材料多元化。
+- 卡牌系统目前已有：3 张初始卡（陆战队员、火蝠、自动炮塔）+ 需解锁单位卡（幽灵、坦克、火箭兵、医疗兵、工程师、侦察无人机、盾卫、狙击手）+ 需解锁建筑卡（火焰塔、狙击塔、维修站、雷达站、障碍墙）+ 需解锁技能卡（轨道打击、战场维修、空投增援、护盾场、侦察扫描、纳米修复、地雷阵、电磁脉冲），暂无载具卡、遗物卡。
+- 卡槽基础 5 格，上限 12 格；卡片升级（例如陆战队员卡 Lv.1→Lv.5）尚未实现。
 - 方舟加成目前只接入 `resetSession` 开局资源与 `wave.js` 每秒资源；尚未接入单位属性、建筑属性、老兵、部门支援等更深的战斗逻辑。
+---
+
+## 九、其他
+
+- 控制台作弊命令：StarAbyss.State.addCores(9999) // 添加 9999 核心
