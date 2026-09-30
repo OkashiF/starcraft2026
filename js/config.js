@@ -34,6 +34,11 @@ StarAbyss.Config = {
             hpPerUpgrade: 15,
             armorType: 'light',
             tags: ['infantry', 'light'],
+            ability: {
+                id: 'stim', name: '兴奋剂',
+                cooldown: 15000, duration: 8000,
+                hpCostPct: 0.1, speedMult: 1.5, atkSpeedMult: 1.5,
+            },
         },
         firebat: {
             name: '火蝠', texture: 'tex_firebat', portrait: '🔥',
@@ -90,6 +95,10 @@ StarAbyss.Config = {
             isHealer: true,
             healAmount: 15,
             healRange: 130,
+            ability: {
+                id: 'heal_burst', name: '治疗波',
+                cooldown: 12000, amount: 50, range: 200,
+            },
         },
         engineer: {
             name: '工程师', texture: 'tex_engineer', portrait: '🔧',
@@ -122,6 +131,10 @@ StarAbyss.Config = {
             tags: ['infantry', 'heavy'],
             isTaunt: true,
             tauntRange: 140,
+            ability: {
+                id: 'taunt_roar', name: '嘲讽怒吼',
+                cooldown: 20000, duration: 5000, range: 250,
+            },
         },
         sniper: {
             name: '狙击手', texture: 'tex_sniper', portrait: '🎯',
@@ -172,6 +185,51 @@ StarAbyss.Config = {
         flier: {
             texture: 'tex_flier', hp: 50, speed: 160, damage: 10, atkCooldown: 900, xp: 15, coreChance: 0.15,
             armorType: 'light', tags: ['bio', 'light', 'flying'],
+        },
+
+        // ===== 新增敌人（第 2 批：技能型） =====
+        // 远程弹道型
+        spitter: {
+            texture: 'tex_acidspitter', hp: 90, speed: 70, damage: 16, atkCooldown: 1400, xp: 20, coreChance: 0.2,
+            armorType: 'bio', tags: ['bio', 'ranged'],
+            attackRange: 220,
+            projectile: { texture: 'tex_acid', speed: 320, tint: 0x88ff00, lifespan: 1200, muzzle: 0x88ff00 },
+        },
+        // 单体治疗者
+        healer: {
+            texture: 'tex_medic', hp: 110, speed: 70, damage: 8, atkCooldown: 1400, xp: 25, coreChance: 0.25,
+            armorType: 'bio', tags: ['bio', 'support'],
+            attackRange: 160,
+            projectile: { texture: 'tex_acid', speed: 280, tint: 0xff88cc, lifespan: 1000, muzzle: 0xff88cc },
+            healer: { amount: 30, range: 180, cooldown: 2500 },
+        },
+        // 群体减伤光环
+        warden: {
+            texture: 'tex_shieldman', hp: 240, speed: 55, damage: 12, atkCooldown: 1500, xp: 35, coreChance: 0.3,
+            armorType: 'heavy', tags: ['bio', 'heavy'],
+            aura: { radius: 220, damageReduction: 0.3 },
+        },
+        // 召唤者
+        summoner: {
+            texture: 'tex_hydralisk', hp: 170, speed: 60, damage: 10, atkCooldown: 1600, xp: 30, coreChance: 0.3,
+            armorType: 'bio', tags: ['bio', 'support'],
+            attackRange: 180,
+            projectile: { texture: 'tex_acid', speed: 240, tint: 0xaa44ff, lifespan: 1100, muzzle: 0xaa44ff },
+            summoner: { type: 'zergling', count: 2, interval: 7000, lifetime: 15000 },
+        },
+        // 不能攻击（肉盾）
+        bulwark: {
+            texture: 'tex_ultralisk', hp: 600, speed: 55, damage: 0, atkCooldown: 9999, xp: 25, coreChance: 0.3,
+            armorType: 'heavy', tags: ['bio', 'heavy'],
+            canAttack: false,
+        },
+        // 不能移动（固定炮台）
+        brood_spire: {
+            texture: 'tex_spore', hp: 350, speed: 0, damage: 22, atkCooldown: 1800, xp: 30, coreChance: 0.3,
+            armorType: 'building', tags: ['bio', 'structure'],
+            attackRange: 280,
+            projectile: { texture: 'tex_acid', speed: 280, tint: 0xaa44ff, lifespan: 1200, muzzle: 0xaa44ff },
+            immobile: true,
         },
     },
 

@@ -75,6 +75,11 @@ StarAbyss.UnitFactory = class {
 
         this._initCommon(unit, def, true);
 
+        // 主动技能实例
+        if (def.ability) {
+            unit.ability = Object.assign({}, def.ability, { readyAt: 0 });
+        }
+
         // 临时召唤物生命周期（空投增援等）
         if (opts.lifetime && opts.lifetime > 0) {
             unit.lifetime = opts.lifetime;
@@ -87,7 +92,7 @@ StarAbyss.UnitFactory = class {
         return unit;
     }
 
-    // priority: 'default' | 'protect' | 'base'，控制该敌人的索敌策略
+    // priority: 'default' | 'protect' | 'base'
     spawnEnemy(type, x, y, tags = null, priority = 'default') {
         const scene = this.scene;
         const def = StarAbyss.Config.ENEMIES[type];
@@ -111,6 +116,22 @@ StarAbyss.UnitFactory = class {
 
         // 攻击优先级（按波次写入）
         enemy.attackPriority = priority || 'default';
+
+        // ===== 技能/属性标记 =====
+        enemy.canAttack = def.canAttack !== false;
+        enemy.immobile  = !!def.immobile;
+
+        if (def.healer) {
+            enemy.healer = Object.assign({}, def.healer, { lastHeal: 0 });
+        }
+        if (def.aura) {
+            enemy.aura = Object.assign({}, def.aura);
+        }
+        if (def.summoner) {
+            enemy.summoner = Object.assign({}, def.summoner, {
+                nextSummon: scene.time.now + def.summoner.interval,
+            });
+        }
 
         this._initCommon(enemy, def, false);
 
@@ -148,7 +169,6 @@ StarAbyss.BuildingFactory = class {
         StarAbyss.UI.showToast(`建造完成: [${bType}]`);
     }
 
-    // 生成保护目标（信标、护盾发生器、要塞核心等）
     spawnProtectTarget(cfg) {
         const scene = this.scene;
         const def = StarAbyss.Config.BUILDINGS[cfg.type];
@@ -173,7 +193,6 @@ StarAbyss.BuildingFactory = class {
         return b;
     }
 
-    // 生成敌方关键建筑
     spawnEnemyBuilding(cfg) {
         const scene = this.scene;
         const def = StarAbyss.Config.BUILDINGS[cfg.type] || {};
@@ -197,7 +216,6 @@ StarAbyss.BuildingFactory = class {
 
         scene.enemyUnits.add(b);
 
-        // 敌方建筑炮塔属性
         if (def.range && def.damage) {
             b.isEnemyTurret = true;
             b.range = def.range;
@@ -207,7 +225,6 @@ StarAbyss.BuildingFactory = class {
             b.splash = !!def.splash;
         }
 
-        // 敌方建筑刷怪属性
         if (def.spawner) {
             b.spawner = Object.assign({}, def.spawner);
             b.nextSpawn = scene.time.now + b.spawner.interval;

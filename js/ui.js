@@ -283,9 +283,11 @@ StarAbyss.UI = {
 
     _renderUnitSkills(scene) {
         const bar = this.$('unit-skills');
+        if (!bar) return;
         bar.innerHTML = '';
-        if (scene.selectedUnits.length === 0) return;
+        if (!scene || !scene.selectedUnits || scene.selectedUnits.length === 0) return;
 
+        // ===== 坦克架设 =====
         const allTanks = scene.selectedUnits.every(u => u.uType === 'tank');
         if (allTanks) {
             const btn = document.createElement('button');
@@ -296,6 +298,28 @@ StarAbyss.UI = {
             btn.style.gap = '8px';
             btn.innerHTML = `<span style="color:var(--accent);font-weight:bold;">E</span> 切换架设模式`;
             btn.onclick = () => scene.combat.toggleSiegeMode();
+            bar.appendChild(btn);
+        }
+
+        // ===== 单位主动技能（取选中单位中第一个拥有技能的） =====
+        const withAbility = scene.selectedUnits.find(u => u.ability);
+        if (withAbility) {
+            const ab = withAbility.ability;
+            const now = scene.time.now;
+            const ready = now >= (ab.readyAt || 0);
+            const cdLeft = Math.max(0, Math.ceil(((ab.readyAt || 0) - now) / 1000));
+
+            const btn = document.createElement('button');
+            btn.className = 'action-btn';
+            btn.style.width = 'auto';
+            btn.style.padding = '6px 12px';
+            btn.style.flexDirection = 'row';
+            btn.style.gap = '8px';
+            btn.disabled = !ready;
+            btn.innerHTML = ready
+                ? `<span style="color:var(--accent);font-weight:bold;">Z</span> ${ab.name}`
+                : `${ab.name} (${cdLeft}s)`;
+            btn.onclick = () => scene.combat.activateUnitAbility();
             bar.appendChild(btn);
         }
     },

@@ -99,6 +99,9 @@ StarAbyss.InputSystem = class {
                 case 'd': case 'D': StarAbyss.App.selectBuildingToPlace('radar_station'); break;
                 case 'f': case 'F': StarAbyss.App.selectBuildingToPlace('wall'); break;
 
+                // 单位主动技能
+                case 'z': case 'Z': scene.combat.activateUnitAbility(); break;
+
                 case 'r': case 'R': StarAbyss.App.useCommanderSkill('orbital'); break;
                 case 't': case 'T': StarAbyss.App.useCommanderSkill('repair'); break;
                 case 'y': case 'Y': StarAbyss.App.useCommanderSkill('airdrop'); break;

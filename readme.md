@@ -98,14 +98,14 @@
 
 | 文件 | 职责 |
 |---|---|
-| `js/config.js` | 全局通用数值：地图默认尺寸、经济速率、升级成本、状态效果参数（`STATUS`）、单位定义（含 `armorType` / `tags` / `bonusVs` / 医疗 / 修理 / 标记 / 嘲讽 / 狙击等新兵种）、敌人定义（含 `armorType` / `tags` / `bonusVs` / `deathExplosion` / `onHitAcid` 等新敌人）、建筑定义（含新增友方建筑 `flame_turret` / `sniper_turret` / `repair_station` / `radar_station` / `wall` 与敌方建筑 `hive` / `spike` / `spore`）、指挥官技能（含新增 `airdrop` / `shield_field` / `scan` / `nano_repair` / `minefield` / `emp`）、据点默认属性、占领参数、刷怪参数、晋升参数、任务系统默认参数。多战役不覆盖的默认值放这里。 |
+| `js/config.js` | 全局通用数值：地图默认尺寸、经济速率、升级成本、状态效果参数（`STATUS`）、单位定义（含 `armorType` / `tags` / `bonusVs` / 医疗 / 修理 / 标记 / 嘲讽 / 狙击等新兵种，以及主动技能 `ability`：陆战队 `stim` 兴奋剂 / 医疗兵 `heal_burst` 治疗波 / 盾卫 `taunt_roar` 嘲讽怒吼）、敌人定义（含 `armorType` / `tags` / `bonusVs` / `deathExplosion` / `onHitAcid`，以及技能型字段：`projectile` 远程弹道 / `healer` 单体治疗 / `aura` 群体减伤 / `summoner` 限时召唤 / `canAttack: false` 不能攻击 / `immobile: true` 不能移动）、建筑定义（含新增友方建筑 `flame_turret` / `sniper_turret` / `repair_station` / `radar_station` / `wall` 与敌方建筑 `hive` / `spike` / `spore`）、指挥官技能（含新增 `airdrop` / `shield_field` / `scan` / `nano_repair` / `minefield` / `emp`）、据点默认属性、占领参数、刷怪参数、晋升参数、任务系统默认参数。多战役不覆盖的默认值放这里。 |
 | `js/audio.js` | Web Audio 实时合成音效。`playShoot` / `playExplosion` / `playClick` / `playAlarm`，无外部音频文件。 |
 | `js/state.js` | 存档 + 单局状态。持久化：核心库存、三项科技等级（`upgrades`，由方舟科研实验室节点通过 `legacyKey` 同步写入）、战役进度、方舟数据（`ark`：资源、部门等级与节点、库存、战绩、卡牌解锁与装载）。单局：当前战役 id、资源、人口、波次、计时、胜负标记、放置建筑类型、任务统计。提供 `load` / `save` / `resetSession` / `getCurrentCampaign` / `commitCores` / `recordKill` / `recordLoss`。`resetSession` 会读取 `Ark.getBonuses()` 应用开局加成。 |
-| `js/ui.js` | 全部 DOM 操作集中处（方舟面板除外，见 `arkUI.js`）。HUD 刷新、目标 / 失败条件面板刷新（`renderObjectivesPanel`）、菜单核心库存与旧科技按钮刷新（`updateMenuUI`）、战役列表渲染（`renderMissionList`）、选择卡片、单位技能栏、Toast、受击闪红、对话浮层、剧情/结算弹窗。`renderArkPanel` 转发到 `StarAbyss.ArkUI.render()`。`updateUI` 中所有生产 / 建造按钮会先经 `Ark.canBuild` 过滤：未解锁或未携带的单位/建筑按钮直接 `display:none`；补给电站无卡牌，始终显示。新增 `renderTopSkillBar`：只渲染已解锁且已携带的指挥官技能卡，按资源是否足够决定禁用，快捷键沿用 `R/T/Y/U/I/O/P/G`。 |
+| `js/ui.js` | 全部 DOM 操作集中处（方舟面板除外，见 `arkUI.js`）。HUD 刷新、目标 / 失败条件面板刷新（`renderObjectivesPanel`）、菜单核心库存与旧科技按钮刷新（`updateMenuUI`）、战役列表渲染（`renderMissionList`）、选择卡片、单位技能栏、Toast、受击闪红、对话浮层、剧情/结算弹窗。`renderArkPanel` 转发到 `StarAbyss.ArkUI.render()`。`updateUI` 中所有生产 / 建造按钮会先经 `Ark.canBuild` 过滤：未解锁或未携带的单位/建筑按钮直接 `display:none`；补给电站无卡牌，始终显示。`renderTopSkillBar`：只渲染已解锁且已携带的指挥官技能卡，按资源是否足够决定禁用，快捷键沿用 `R/T/Y/U/I/O/P/G`。`_renderUnitSkills`：坦克显示架设切换；选中单位若带 `ability`，追加主动技能按钮，显示"Z 技能名"或冷却倒计时"技能名 (Ns)"，点击调用 `scene.combat.activateUnitAbility()`。 |
 | `js/arkUI.js` | 方舟与装载界面渲染。`renderLoadout`：主菜单右侧“战前装载”，显示卡槽占用、卡牌库、点击携带/卸下；按 `slotCost` 累加已占用格，支持占 2 格的卡牌。`render`：方舟母舰面板，按部门渲染等级、节点列表、升级按钮。`toggleCard` / `unequip` / `upgradeDepartment` / `upgradeNode` 为 `onclick` 入口。跨模块入口 `StarAbyss.ArkUI`。 |
 | `js/textures.js` | 用 Phaser Graphics 程序化生成所有矢量纹理（基地、补给站、炮塔、四种友军、三种敌人、据点、子弹、火焰、粒子、护盾发生器 / 要塞核心 `tex_shield_gen`、运输车 `tex_convoy`、方舟信标 `tex_beacon`）。新增纹理：`tex_rocketeer` / `tex_medic` / `tex_engineer` / `tex_drone` / `tex_shieldman` / `tex_sniper` / `tex_rocket` / `tex_acid` / `tex_flame_turret` / `tex_sniper_turret` / `tex_repair_station` / `tex_radar_station` / `tex_wall` / `tex_reaper` / `tex_acidspitter` / `tex_crystalspike` / `tex_flier` / `tex_hive` / `tex_spike` / `tex_spore` / `tex_mine`。 |
+| `js/entities.js` | `UnitFactory`（生成友军/敌人）。`spawnFriendly(type, x, y, isFree, opts)` 第 5 参 `opts.lifetime` 用于临时召唤物（空投增援等）；若单位定义带 `ability`，会在 `unit.ability` 上实例化（含 `readyAt` 冷却计时）。`spawnEnemy(type, x, y, tags, priority)` 第 4 参 `tags` 用于 `destroy_target` 目标统计，第 5 参 `priority` 写入 `enemy.attackPriority` 供 `enemyAI.js` 索敌分支；落地技能型字段 `canAttack`（`false` 只贴脸不出手）/ `immobile`（`true` 原地攻击）/ `healer`（单体治疗，含 `lastHeal` 计时）/ `aura`（群体减伤）/ `summoner`（限时召唤，含 `nextSummon` 计时）。`_initCommon` 初始化 `armorType` / `tags` / `bonusVs` / `status`（stun / slow / burn / mark / shield）。`BuildingFactory` 放置建筑，`spawnProtectTarget` 生成友方保护目标、`spawnEnemyBuilding` 生成敌方关键建筑，支持敌方建筑炮塔（`isEnemyTurret`）与刷怪（`spawner`）；`spawnEnemyBuilding` 将 `cfg.tags` 写入建筑对象的 `b.tags`，供 `wave.js` 的 `_getAliveEnemyBuildings` 按 tag 过滤。 |
 | `js/app.js` | 应用流程控制。初始化菜单、准备战役、开始游戏、触发生产 / 放置建筑 / 指挥官技能（均先经 `Ark.canBuild` / `Ark.canUseSkill` 校验）、结算胜负、返回菜单、打开/关闭方舟面板。`initMenu` 会调用 `ArkUI.renderLoadout` 渲染战前装载。`buyUpgrade` 保留兼容，转发到 `Ark.upgradeNode`。`selectBuildingToPlace` 支持新建筑名称。`window.gameApp` 供 HTML `onclick` 使用。 |
-| `js/entities.js` | `UnitFactory`（生成友军/敌人）。`spawnFriendly(type, x, y, isFree, opts)` 第 5 参 `opts.lifetime` 用于临时召唤物（空投增援等）。`spawnEnemy(type, x, y, tags, priority)` 第 4 参 `tags` 用于 `destroy_target` 目标统计，第 5 参 `priority` 写入 `enemy.attackPriority` 供 `enemyAI.js` 索敌分支。`_initCommon` 初始化 `armorType` / `tags` / `bonusVs` / `status`（stun / slow / burn / mark / shield）。`BuildingFactory` 放置建筑，`spawnProtectTarget` 生成友方保护目标、`spawnEnemyBuilding` 生成敌方关键建筑，支持敌方建筑炮塔（`isEnemyTurret`）与刷怪（`spawner`）；`spawnEnemyBuilding` 将 `cfg.tags` 写入建筑对象的 `b.tags`，供 `wave.js` 的 `_getAliveEnemyBuildings` 按 tag 过滤。 |
 | `js/scene.js` | `MainScene`。负责场景组装：设置世界边界、背景网格、实例化所有 system 与 factory、按当前战役初始化地图（生成保护目标、敌方关键建筑、车队、区域）、`update` 中依次调用各 system。车队由 `_spawnConvoy` 生成、`_updateConvoy` 沿 `waypoints` 移动；waypoint 支持 `dwell`（停留秒数）与 `label`（标签），到达带 `dwell` 的点时车队原地停留，倒计时结束再前进。 |
 
 ### `js/data/` 数据层
@@ -117,13 +117,13 @@
 | `js/data/ark.js` | 方舟数据定义。`ArkData.DEPARTMENTS`：部门 id、名称、图标、描述、最大等级、部门升级成本数组、每级 `bonusPerLevel`、以及多升级节点 `upgrades[]`（每个节点含 `id` / `name` / `desc` / `maxLevel` / `cost` / `requires` / `effects` / `unlocks`；可选 `legacyKey`，升级时同步写入 `State.upgrades[legacyKey]`）。`research.upgrades` 已并入原主菜单旧三项科技：`node_infantryHp`（`legacyKey: 'infantryHp'`）、`node_mechAtk`（`legacyKey: 'mechAtk'`）、`node_economy`（`legacyKey: 'economy'`），各 `maxLevel: 3`、`cost: [2, 5, 10]`、`requires: { deptLevel: 1 }`。新增大量解锁节点：兵营 `unlock_medic` / `unlock_engineer`，机库 `unlock_drone` / `unlock_airdrop`，科研 `unlock_rocketeer` / `unlock_shieldman` / `unlock_sniper` / `unlock_flame_turret` / `unlock_sniper_turret`，工程 `unlock_repair_station` / `unlock_wall` / `unlock_nano_repair` / `unlock_minefield`，情报 `unlock_radar_station`，舰桥 `unlock_shield_field` / `unlock_scan`，动力 `unlock_emp`。`ArkData.CARDS`：统一卡牌定义（`unit` / `building` / `skill`），含 `id` / `type` / `name` / `slotCost` / `buildKey` 或 `skillKey` / `defaultUnlocked` / `unlockBy` / `desc`。新增大量单位卡、建筑卡、技能卡。`ArkData.LOADOUT`：`baseSlots` / `maxSlots` / `allowDuplicate` / `defaultEquipped`。`ArkData.DEFAULT_LOOT`：战役胜负默认发放的方舟资源（合金/数据/补给）。 |
 | `js/systems/unlock.js` | 战役解锁与进度。判断某战役是否解锁、生成锁定原因、确保进度条目、标记完成、累加核心、列出全部战役。 |
 | `js/systems/vfx.js` | 特效：环境粒子、枪口焰、命中爆点、死亡爆炸。 |
-| `js/systems/combat.js` | 友军攻击逻辑、炮塔攻击、弹道生成、命中判定、敌人受伤与死亡、击杀统计（`recordKill`）、经验与晋升、保护目标受伤与摧毁（`damageBuilding` / `_destroyBuilding`）、坦克架设切换、指挥官技能（含新增 `airdrop` / `shield_field` / `scan` / `nano_repair` / `minefield` / `emp`）。新增：伤害计算 `computeDamage`（armorType + bonusVs + mark）、状态效果处理 `_processStatus`（灼烧 / 酸液 / 护盾）、医疗兵治疗、工程师修理、无人机标记、盾卫嘲讽、地雷阵、酸液区域、纳米修复区域、敌方建筑炮塔与刷怪。 |
-| `js/systems/enemyAI.js` | 敌人追踪与攻击。按 `enemy.attackPriority` 分支：`'default'`（或未设）保持原逻辑（附近友军 120px > 保护目标 200px > 指挥中心）；`'protect'` 无视距离扑向最近保护目标（信标、护盾发生器、车队），仅友军 80px 内转火，无保护目标时回落到指挥中心；`'base'` 无视距离扑向指挥中心，仅友军/保护目标 80px 内转火。跳过敌方建筑（`isEnemyBuilding`）。基地被摧毁时触发失败。新增：眩晕 / 减速状态处理、盾卫嘲讽优先、酸蚀者命中生成酸液区域。 |
+| `js/systems/combat.js` | 友军攻击逻辑、炮塔攻击、弹道生成、命中判定、敌人受伤与死亡、击杀统计（`recordKill`）、经验与晋升、保护目标受伤与摧毁（`damageBuilding` / `_destroyBuilding`）、坦克架设切换、指挥官技能（含新增 `airdrop` / `shield_field` / `scan` / `nano_repair` / `minefield` / `emp`）。新增：伤害计算 `computeDamage`（armorType + bonusVs + mark）、状态效果处理 `_processStatus`（灼烧 / 酸液 / 护盾）、医疗兵治疗、工程师修理、无人机标记、盾卫嘲讽、地雷阵、酸液区域、纳米修复区域、敌方建筑炮塔与刷怪。**技能型敌人 / 友军主动技能**：友军主动技能入口 `activateUnitAbility()`（按 `unit.ability.id` 分支：`stim` 兴奋剂扣血加速 / `heal_burst` 治疗波 / `taunt_roar` 嘲讽怒吼写敌人 `tauntedBy` + `tauntUntil`，`ab.readyAt` 计冷却）；友军 `stimUntil` 到期恢复 `speed` / `atkCooldown`；`damageEnemy` 入口叠加群体减伤光环（`enemy.aura` 取范围内最大 `damageReduction` 单值、不乘算堆叠）；敌方召唤物 `lifetime` 到点销毁；敌方投射物命中判定（`enemyProjectile` + `hitTarget` 距离 24px）走 `_applyEnemyProjectileHit`；敌方 `healer` 每 `cooldown` 治疗范围内最低血量敌人；敌方 `summoner` 每 `interval` 召唤 `count` 个限时 `lifetime` 单位（tags 自动加 `'summoned'`）。 |
+| `js/systems/enemyAI.js` | 敌人追踪与攻击。按 `enemy.attackPriority` 分支：`'default'`（或未设）保持原逻辑（附近友军 120px > 保护目标 200px > 指挥中心）；`'protect'` 无视距离扑向最近保护目标（信标、护盾发生器、车队），仅友军 80px 内转火，无保护目标时回落到指挥中心；`'base'` 无视距离扑向指挥中心，仅友军/保护目标 80px 内转火。跳过敌方建筑（`isEnemyBuilding`）。基地被摧毁时触发失败。新增：眩晕 / 减速状态处理、盾卫被动嘲讽优先（范围 140px）、酸蚀者命中生成酸液区域。**技能型敌人支持**：主动嘲讽（盾卫 `taunt_roar` 写入敌人 `tauntedBy` / `tauntUntil`，优先级最高）、`enemy.immobile` 原地攻击（不进 `moveToObject`）、`enemy.canAttack === false` 只贴脸不出手、`_attack` 统一处理近战即时伤害与远程弹道（有 `def.projectile` 走 `_fireProjectile`，伤害经 `combat.computeDamage`）、`_fireProjectile` 生成带 `enemyProjectile` / `hitTarget` / `targetType` / `onHitAcid` 的弹道对象交由 `combat.js` 命中判定。 |
 | `js/systems/wave.js` | 资源每秒增长（叠加 `Ark.getBonuses()` 的 `econMineralsPerSec` / `econGasPerSec`）、单局计时（`battleElapsed`）、据点持续收益、波次计时、按当前战役的波次表刷怪、据点占领判定、血条与占领进度条绘制（含车队、保护目标、敌方建筑）。刷怪走 `waves[].spawns[]` 新逻辑：每项指定 `type` / `count` / `at`（出生点 id 或 `{x,y}`）/ `zone`（出生区域 id 或内联区域对象）/ `delay` / `spawnInterval` / `priority` / `tags` / `boss` / `fromBuildings`。`_resolveSpawnPosition` 解析出生位置：优先 `at` 精确点，其次 `zone` 区域内随机（`circle` / `rect`），最后兜底为地图边缘随机。spawn 项 `boss: true` 时该组敌人放大 1.6 倍、HP ×3、伤害 ×1.5，并自动写入 `tags: ['boss']`。**无尽波**：当战役声明 `endless: true` 且静态 `waves[]` 耗尽时，调用 `_buildEndlessWave(campaign, S.wave)` 动态生成下一波（只改敌人种类与数量，HP/伤害不动；1–4 波以迅猛虫/刺蛇为主，5+ 裂解虫、6+ 飞刺、7+ 噬星巨兽、9+ 酸蚀者、10+ Boss、12+ 晶刺兽，Boss 数每 5 波 +1）。**从建筑刷怪**：`spawns[].fromBuildings` 为 `true` 或 tag 字符串时，由 `_resolveSpawnFromBuilding(tagFilter, index)` 在存活敌方建筑间**轮询均匀分配**、建筑附近圆形随机偏移出生；每个个体在 `delayedCall` 内**实时重查**存活建筑列表，某建筑被摧毁后该点自动跳过。`_getAliveEnemyBuildings(tagFilter)` 按 `e.isEnemyBuilding` / `e.active` / `e.hp > 0` / `e.tags` 过滤。 |
 | `js/systems/zone.js` | 区域系统。 `init(campaign)` 读取 `zones` 生成区域；`update` 判定玩家 / 敌人在区域内外的进出事件、占领进度、驻留计时；`getZone` / `getZoneOwner` / `_insideZone` 供 `objective.js` 与 `script.js` 查询。 |
 | `js/systems/objective.js` | 任务系统核心。 支持多目标类型：`survive_waves` / `survive_time` / `capture_all_nodes` / `capture_node` / `hold_zone` / `reach_zone` / `extract_units` / `protect_target` / `destroy_target` / `kill_count` / `boss_kill` / `composite`。支持失败条件：`base_destroyed` / `target_destroyed` / `target_dead` / `timeout` / `friendly_loss_limit` / `ally_all_dead` / `zone_lost`。支持 `phases` 多阶段。全部完成触发胜利，失败条件触发 `gameOver(false, failReason)`。 |
 | `js/systems/script.js` | 战役脚本触发。监听 `onStart` / `onWave` / `onNodeCaptured` / `onObjectiveComplete` / `onTargetDestroyed` / `onUnitEnterZone` / `onZoneCaptured` / `onTimer` / `onAllyEvent`，命中后播放对应对话或执行 action。每个脚本只触发一次。 |
-| `js/systems/input.js` | 框选、右键移动、建筑放置、快捷键。快捷键更新：`1–0` 生产新单位（陆战队 / 火蝠 / 幽灵 / 坦克 / 火箭兵 / 医疗兵 / 工程师 / 无人机 / 盾卫 / 狙击手），`Q/W/A/S/D/F` 放置新建筑（自动炮塔 / 火焰塔 / 狙击塔 / 维修站 / 雷达站 / 障碍墙），`R/T/Y/U/I/O/P/G` 释放指挥官技能（轨道打击 / 战场维修 / 空投增援 / 护盾场 / 侦察扫描 / 纳米修复 / 地雷阵 / 电磁脉冲），`E` 切换坦克架设。 |
+| `js/systems/input.js` | 框选、右键移动、建筑放置、快捷键。快捷键更新：`1–0` 生产新单位（陆战队 / 火蝠 / 幽灵 / 坦克 / 火箭兵 / 医疗兵 / 工程师 / 无人机 / 盾卫 / 狙击手），`Q/W/A/S/D/F` 放置新建筑（自动炮塔 / 火焰塔 / 狙击塔 / 维修站 / 雷达站 / 障碍墙），`E` 切换坦克架设，`Z` 触发选中单位的主动技能（`scene.combat.activateUnitAbility()`），`R/T/Y/U/I/O/P/G` 释放指挥官技能（轨道打击 / 战场维修 / 空投增援 / 护盾场 / 侦察扫描 / 纳米修复 / 地雷阵 / 电磁脉冲）。 |
 | `js/systems/camera.js` | 方向键与 WASD 平移镜头。 |
 | `js/systems/minimap.js` | 小地图绘制（建筑、友军、敌军、区域、车队、保护目标、敌方关键建筑、镜头框）与点击/拖拽跳转镜头。 |
 
@@ -137,8 +137,14 @@
 |---|---|
 | 单位价格、血量、伤害、射程、攻速、弹道速度 | `js/config.js`（`UNITS`） |
 | 单位护甲类型、标签、克制倍率 | `js/config.js`（`UNITS[].armorType` / `tags` / `bonusVs`） |
+| 单位主动技能（名称 / 冷却 / 持续时间 / 效果参数） | `js/config.js`（`UNITS[].ability`） |
 | 敌人血量、速度、伤害、经验、掉核心概率 | `js/config.js`（`ENEMIES`） |
 | 敌人护甲类型、标签、克制倍率、死亡爆炸、酸液命中 | `js/config.js`（`ENEMIES[].armorType` / `tags` / `bonusVs` / `deathExplosion` / `onHitAcid`） |
+| 敌人远程弹道（速度 / 纹理 / tint / 寿命） | `js/config.js`（`ENEMIES[].projectile`） |
+| 敌人单体治疗（治疗量 / 半径 / 冷却） | `js/config.js`（`ENEMIES[].healer`） |
+| 敌人群体减伤光环（半径 / 减伤比例） | `js/config.js`（`ENEMIES[].aura`） |
+| 敌人召唤（单位类型 / 数量 / 间隔 / 召唤物寿命） | `js/config.js`（`ENEMIES[].summoner`） |
+| 敌人不能攻击 / 不能移动 | `js/config.js`（`ENEMIES[].canAttack: false` / `immobile: true`） |
 | 建筑血量、造价、炮塔射程/伤害/攻速 | `js/config.js`（`BUILDINGS`） |
 | 保护目标（护盾发生器、运输车、信标、要塞核心）血量/纹理 | `js/config.js`（`BUILDINGS`） |
 | 指挥官技能消耗与效果 | `js/config.js`（`SKILLS`） |
@@ -163,7 +169,9 @@
 | 想加的内容 | 要动的文件 |
 |---|---|
 | 新增一个友军兵种 | `js/config.js`（加定义，含 `armorType` / `tags` / `bonusVs` / 特殊字段）→ `js/textures.js`（加纹理）→ `index.html`（加按钮）→ `js/data/ark.js`（加 `CARDS` 条目与解锁节点）→ `js/ui.js`（按钮显隐与 enable 判定已通用）→ `js/app.js` 快捷键可选 |
+| 给友军加主动技能 | `js/config.js`（`UNITS[].ability`）→ `js/entities.js`（`spawnFriendly` 自动实例化，无需改）→ `js/systems/combat.js`（`activateUnitAbility` 加 `ab.id` 分支）→ `js/ui.js`（`_renderUnitSkills` 已通用）→ `js/systems/input.js`（`Z` 键已绑定） |
 | 新增一个敌人类型 | `js/config.js`（加定义，含 `armorType` / `tags` / `bonusVs` / 特殊字段）→ `js/textures.js`（加纹理）→ `js/data/campaigns.js`（写进某波 `types`） |
+| 给敌人加技能（治疗 / 光环 / 召唤 / 不能攻击 / 不能移动 / 远程弹道） | `js/config.js`（`ENEMIES[]` 加 `healer` / `aura` / `summoner` / `canAttack` / `immobile` / `projectile` 字段）→ `js/entities.js`（`spawnEnemy` 已通用落地）→ `js/systems/enemyAI.js`（`_attack` / `_fireProjectile` 已通用）→ `js/systems/combat.js`（`healer` / `aura` / `summoner` / 弹道命中已通用） |
 | 新增一个可建造建筑 | `js/config.js`（加定义）→ `js/textures.js`（加纹理）→ `index.html`（加按钮）→ `js/data/ark.js`（加 `CARDS` 条目与解锁节点）→ `js/entities.js`（`BuildingFactory` 分支已通用）→ `js/ui.js`（按钮显隐已通用） |
 | 新增一个保护目标建筑 | `js/config.js`（`BUILDINGS` 加定义）→ `js/textures.js`（加纹理）→ `js/data/campaigns.js`（该战役 `protectTargets`） |
 | 新增一个敌方关键建筑 | `js/config.js`（`BUILDINGS` 加定义，可含 `range` / `damage` / `spawner`）→ `js/textures.js`（加纹理）→ `js/data/campaigns.js`（该战役 `enemyBuildings`）→ `js/entities.js`（`spawnEnemyBuilding` 已支持炮塔与刷怪） |
@@ -173,73 +181,6 @@
 | 新增临时召唤物 | `js/config.js`（单位定义）+ `js/entities.js`（`spawnFriendly` 支持 `opts.lifetime`）+ `js/systems/combat.js`（技能生成） |
 | 新增地雷 / 酸液 / 纳米区域 | `js/config.js`（技能或敌人定义）+ `js/systems/combat.js`（`_mines` / `_acidZones` / `_nanoZones`） |
 | 新增 Boss 波 | `js/data/campaigns.js`（波次项加 `boss: true`）+ `js/systems/wave.js`（已支持放大与属性加成） |
-
-### 战役内容
-
-| 想加的内容 | 要动的文件 |
-|---|---|
-| 新增一个战役 | 只改 `js/data/campaigns.js`（追加对象）；如需对话再改 `js/data/dialogues.js` |
-| 新增一个无尽战役 | `js/data/campaigns.js`（战役对象加 `endless: true` + `waves: []`）+ `js/systems/wave.js`（`_buildEndlessWave` 已支持）+ 如需对话再改 `js/data/dialogues.js` |
-| 调整无尽波增强曲线 | `js/systems/wave.js`（`_buildEndlessWave` 内的 `push(...)` 分支） |
-| 让波次从存活的敌方建筑位置刷怪 | `js/data/campaigns.js`（`spawns[].fromBuildings: true` 或 tag 字符串）+ `js/systems/wave.js`（`_resolveSpawnFromBuilding` / `_getAliveEnemyBuildings` 已支持） |
-| 调整某战役地图尺寸/基地位置/据点位置 | `js/data/campaigns.js`（该战役的 `map`，含 `width` / `height` / `base` / `depot` / `nodes` / `spawnPoints` / `spawnZones`） |
-| 调整某战役出生点 / 出生区域 | `js/data/campaigns.js`（该战役 `map.spawnPoints` / `map.spawnZones`），`js/systems/wave.js`（`_resolveSpawnPosition` 已支持解析） |
-| 调整某战役初始单位 | `js/data/campaigns.js`（`initialUnits`） |
-| 调整某战役波次组成、数量、间隔、攻击优先级、Boss 波 | `js/data/campaigns.js`（`waves[].spawns[]` 的 `type` / `count` / `at` / `zone` / `delay` / `spawnInterval` / `priority` / `tags` / `boss`，以及波级 `interval` / `priority`） |
-| 改某战役目标 | `js/data/campaigns.js`（`objectives`），必要时扩 `js/systems/objective.js` |
-| 加失败条件 | `js/data/campaigns.js`（`failConditions`），必要时扩 `js/systems/objective.js`（`_checkFail`） |
-| 加区域（撤离区/保护区/占领区） | `js/data/campaigns.js`（`zones`）→ `js/systems/zone.js` 已支持 |
-| 加护送车队 | `js/data/campaigns.js`（`convoy`，waypoint 支持 `dwell` 停留秒数 / `label` 标签）→ `js/scene.js`（`_spawnConvoy` / `_updateConvoy` 已支持停留） |
-| 加保护目标 | `js/data/campaigns.js`（`protectTargets`）→ `js/entities.js`（`spawnProtectTarget` 已支持） |
-| 加敌方关键建筑 | `js/data/campaigns.js`（`enemyBuildings`）→ `js/entities.js`（`spawnEnemyBuilding` 已支持炮塔与刷怪） |
-| 改某战役胜负文案 | `js/data/campaigns.js`（`victoryText` / `defeatText`） |
-| 加战役内对话 | `js/data/dialogues.js`（加条目）+ `js/data/campaigns.js`（`scripts` 引用） |
-| 加新的脚本触发类型 | `js/systems/script.js`（扩展 `_matches`）+ 对应系统发事件 |
-| 加新的目标类型 | `js/systems/objective.js`（扩展 `_isDone`）+ `js/app.js`（`_describeObjective` 文案）+ `js/ui.js`（`_describe` 文案） |
-| 加新的失败条件 | `js/systems/objective.js`（扩展 `_checkFail` + `_defaultFailReason`） |
-| 加多阶段任务 | `js/data/campaigns.js`（`phases`）+ `js/systems/objective.js`（`_getActiveObjectives` 已支持） |
-| 战役解锁条件 | `js/data/campaigns.js`（`unlock`）+ `js/systems/unlock.js` |
-| 战役进度持久化 | `js/state.js`（`campaignProgress` 已存在）+ `js/systems/unlock.js` |
-| 给某战役发定制方舟战利品 | `js/data/campaigns.js`（`arkLoot.victory` / `arkLoot.defeat`） |
-
-### 方舟 / 部门 / 卡牌 / 装载
-
-| 想改的内容 | 要动的文件 |
-|---|---|
-| 新增方舟部门 | `js/data/ark.js`（`DEPARTMENTS` 加条目）→ `js/systems/ark.js`（`ensureState` 自动补全，无需改逻辑） |
-| 部门下加升级节点 | `js/data/ark.js`（`DEPARTMENTS[id].upgrades[]` 加条目） |
-| 节点解锁某张卡牌 | `js/data/ark.js`（节点加 `unlocks.cards: ['xxx']`） |
-| 节点提供全局加成 | `js/data/ark.js`（节点加 `effects: [{ key, value }]`）+ `js/systems/ark.js`（`getBonuses` 已汇总）+ 使用处（如 `state.js` / `wave.js` / `entities.js`） |
-| 节点前置条件 | `js/data/ark.js`（节点加 `requires: { deptLevel, nodes }`） |
-| 新增一张卡牌 | `js/data/ark.js`（`CARDS` 加条目）+ 若为新单位/建筑则按“单位/建筑”流程补 `config.js` / `textures.js` / `index.html` |
-| 调整卡槽基础数 / 上限 / 默认装备 | `js/data/ark.js`（`LOADOUT`） |
-| 调整卡槽扩容节点 | `js/data/ark.js`（对应节点的 `effects: [{ key: 'loadoutSlot', value: 1 }]`） |
-| 卡牌携带校验（建造/技能） | `js/systems/ark.js`（`canBuild` / `canUseSkill`）+ `js/app.js` + `js/ui.js`（均已接入） |
-| 新增方舟资源类型 | `js/state.js`（`ark.resources`）+ `js/systems/ark.js`（`ensureState` 补全）+ `index.html`（资源条） |
-
-### UI / 流程
-
-| 想改的内容 | 要动的文件 |
-|---|---|
-| 主菜单布局、标题、面板 | `index.html` + `css/style.css` |
-| 战役列表样式 | `css/style.css`（`.mission-list`、`.mission-card`） |
-| 战役列表渲染逻辑 | `js/ui.js`（`renderMissionList`） |
-| 战前装载面板布局与卡槽 | `index.html`（`#loadout-panel`）+ `css/style.css`（`.loadout-*`、`.card-*`）+ `js/arkUI.js`（`renderLoadout` / `toggleCard` / `unequip`） |
-| HUD 顶栏资源显示 | `index.html` + `js/ui.js`（`updateUI`） |
-| 顶部指挥官技能栏 | `index.html`（`#top-skill-bar`）+ `css/style.css`（`.top-skill-bar` / `.top-skill-btn`）+ `js/ui.js`（`renderTopSkillBar`） |
-| 底部生产/建造按钮显隐与禁用 | `js/ui.js`（`updateUI` 中 `refreshUnitBtn` / `refreshBuildingBtn`）+ `index.html`（按钮 ID）+ `js/systems/ark.js`（`canBuild`） |
-| 目标 / 失败条件面板样式 | `css/style.css`（`.objectives-panel`、`.obj-title`、`.obj-row`） |
-| 目标 / 失败条件面板渲染 | `js/ui.js`（`renderObjectivesPanel`）+ `js/systems/objective.js`（`describeObjectives` / `describeFailConditions`） |
-| 选择卡片、单位技能栏 | `js/ui.js`（`updateSelectionCard`、`_renderUnitSkills`） |
-| 剧情简报弹窗 | `js/ui.js`（`showStoryModal`）+ `js/app.js`（`prepareMission`） |
-| 结算弹窗 | `js/ui.js`（`showStoryModal`）+ `js/app.js`（`gameOver`） |
-| 战役内对话浮层 | `css/style.css`（`#dialogue-overlay`）+ `js/ui.js`（`showDialogue`） |
-| Toast 提示 | `js/ui.js`（`showToast`） |
-| 受击闪红 | `js/ui.js`（`flashDamage`） |
-| 主菜单方舟入口按钮 | `index.html`（`.ark-entry-btn`）+ `css/style.css` |
-| 方舟面板布局、资源条、部门卡 | `index.html`（`#ark-panel`）+ `css/style.css`（`.ark-*`、`.dept-*`、`.upgrade-node-*`）+ `js/arkUI.js`（`render`） |
-| 方舟部门升级节点渲染 | `js/arkUI.js`（`render` 中 `nodeHtml` 部分）+ `css/style.css`（`.upgrade-node-*`） |
-| 结算弹窗战利品行 | `js/app.js`（`gameOver`）+ `css/style.css`（`.loot-row`） |
 
 ### 系统逻辑
 
@@ -251,14 +192,23 @@
 | 医疗兵治疗 | `js/config.js`（`isHealer` / `healAmount` / `healRange`）+ `js/systems/combat.js` |
 | 工程师修理 | `js/config.js`（`isRepairer` / `repairAmount` / `repairRange`）+ `js/systems/combat.js` |
 | 侦察无人机标记 | `js/config.js`（`isMarker` / `markerRange` / `markerDuration`）+ `js/systems/combat.js` |
-| 盾卫嘲讽 | `js/config.js`（`isTaunt` / `tauntRange`）+ `js/systems/enemyAI.js` |
+| 盾卫被动嘲讽 | `js/config.js`（`isTaunt` / `tauntRange`）+ `js/systems/enemyAI.js` |
+| 友军主动技能 | `js/config.js`（`UNITS[].ability`）+ `js/entities.js`（`spawnFriendly` 实例化 `unit.ability`）+ `js/systems/combat.js`（`activateUnitAbility`）+ `js/systems/input.js`（`Z` 键）+ `js/ui.js`（`_renderUnitSkills` 按钮） |
+| 友军兴奋剂（扣血加速） | `js/config.js`（`UNITS.marine.ability`）+ `js/systems/combat.js`（`stimUntil` 到期恢复 `speed` / `atkCooldown`） |
+| 友军治疗波 | `js/config.js`（`UNITS.medic.ability`）+ `js/systems/combat.js`（`activateUnitAbility` 内 `heal_burst` 分支） |
+| 友军嘲讽怒吼（主动） | `js/config.js`（`UNITS.shieldman.ability`）+ `js/systems/combat.js`（`taunt_roar` 分支）+ `js/systems/enemyAI.js`（`tauntedBy` / `tauntUntil` 优先） |
 | 地雷阵 / 酸液区域 / 纳米修复区域 | `js/systems/combat.js`（`_mines` / `_acidZones` / `_nanoZones`）+ `js/config.js`（对应技能或敌人定义） |
 | 炮塔攻击行为（友方 / 敌方） | `js/systems/combat.js` |
 | 敌方建筑炮塔与刷怪 | `js/entities.js`（`spawnEnemyBuilding`）+ `js/systems/combat.js`（敌方建筑炮塔与刷怪） |
 | 保护目标受伤与摧毁 | `js/systems/combat.js`（`damageBuilding` / `_destroyBuilding`） |
 | 击杀统计（供 destroy_target 用） | `js/systems/combat.js`（`_killEnemy` / `_destroyBuilding` 调 `State.recordKill`） |
-| 敌人 AI 行为 | `js/systems/enemyAI.js`（按 `enemy.attackPriority` 分支：default / protect / base） |
-| 敌人攻击保护目标 / 车队 | `js/systems/enemyAI.js`（`protectTargets` 收集逻辑 + `attackPriority` 分支；`protect` 无视距离扑向最近保护目标） |
+| 敌人 AI 行为 | `js/systems/enemyAI.js`（按 `enemy.attackPriority` 分支：default / protect / base；主动嘲讽 `tauntedBy` / `tauntUntil` 优先；`immobile` 原地攻击；`canAttack: false` 只贴脸不出手） |
+| 敌人远程攻击 | `js/systems/enemyAI.js`（`_fireProjectile` 生成 `enemyProjectile` 弹道）+ `js/systems/combat.js`（`_applyEnemyProjectileHit` 命中判定，距离 24px） |
+| 敌人单体治疗 | `js/config.js`（`ENEMIES[].healer`）+ `js/entities.js`（`spawnEnemy` 落地）+ `js/systems/combat.js`（`healer` 循环，治疗范围内最低血量敌人） |
+| 敌人群体减伤光环 | `js/config.js`（`ENEMIES[].aura`）+ `js/entities.js` + `js/systems/combat.js`（`damageEnemy` 入口取范围内最大 `damageReduction` 单值） |
+| 敌人限时召唤 | `js/config.js`（`ENEMIES[].summoner`）+ `js/entities.js` + `js/systems/combat.js`（`summoner` 循环 + 召唤物 `lifetime` 清理，tags 自动加 `'summoned'`） |
+| 敌人不能攻击 / 不能移动 | `js/config.js`（`ENEMIES[].canAttack: false` / `immobile: true`）+ `js/entities.js`（`spawnEnemy` 落地）+ `js/systems/enemyAI.js`（主循环分支） |
+| 敌人攻击保护目标 / 车队 | `js/systems/enemyAI.js`（`protectTargets` 收集逻辑 + `attackPriority` 分支） |
 | 波次攻击优先级 | `js/data/campaigns.js`（`waves[].priority` 作为波级默认，`waves[].spawns[].priority` 覆盖波级）+ `js/systems/wave.js`（`triggerNextWave` 传入 `spawnEnemy`）+ `js/entities.js`（`spawnEnemy` 写入 `enemy.attackPriority`） |
 | Boss 波 | `js/data/campaigns.js`（`waves[].spawns[].boss: true`）+ `js/systems/wave.js`（放大与属性加成） |
 | 无尽波生成 | `js/systems/wave.js`（`_buildEndlessWave`；战役需 `endless: true`，静态 `waves[]` 耗尽后自动接管） |
@@ -269,7 +219,7 @@
 | 区域判定、占领、进出事件 | `js/systems/zone.js` |
 | 胜负条件 | `js/systems/objective.js`（目标 + 失败条件）+ `js/systems/enemyAI.js`（基地被毁） |
 | 多阶段任务 | `js/systems/objective.js`（`_getActiveObjectives` 读 `phases`） |
-| 快捷键 | `js/systems/input.js` |
+| 快捷键 | `js/systems/input.js`（含新增 `Z` 单位技能） |
 | 镜头移动 | `js/systems/camera.js` |
 | 小地图绘制与跳转 | `js/systems/minimap.js` |
 | 粒子与爆炸表现 | `js/systems/vfx.js` |
@@ -283,25 +233,6 @@
 | 建造 / 技能卡牌校验 | `js/systems/ark.js`（`canBuild` / `canUseSkill`）+ `js/app.js` + `js/ui.js` |
 | 战役结算发放方舟资源 | `js/systems/ark.js`（`grantBattleLoot`）+ `js/app.js`（`gameOver`） |
 | 开局应用方舟加成 | `js/state.js`（`resetSession`）+ `js/systems/wave.js`（每秒资源） |
-
-### 音效
-
-| 想改的内容 | 要动的文件 |
-|---|---|
-| 开枪 / 爆炸 / 点击 / 警报音色 | `js/audio.js` |
-| 触发时机 | 调用处：`js/systems/combat.js`、`js/systems/wave.js`、`js/app.js`、`js/ui.js`、`js/arkUI.js` |
-
-### 存档
-
-| 想改的内容 | 要动的文件 |
-|---|---|
-| 存档字段（核心、科技、战役进度） | `js/state.js`（`load` / `save`） |
-| 方舟存档字段（资源、部门、节点、卡牌、装载、战绩） | `js/state.js`（`ark`）+ `js/systems/ark.js`（`ensureState` 自动补全） |
-| 清档 / 迁移 | `js/state.js` |
-| 每战役独立科技（当前为全局共享） | `js/state.js`（需把 `upgrades` 改为按战役分桶）+ `js/entities.js`（读取处） |
-| 新增部门后旧档兼容 | `js/systems/ark.js`（`ensureState` 自动补全缺失部门） |
-| 新增卡牌后旧档兼容 | `js/systems/ark.js`（`ensureState` 自动补默认解锁卡） |
-
 
 ---
 
@@ -508,7 +439,12 @@ arkLoot: {
 - 星级评价目前只有“胜利即 3 星”，未实现按用时 / 损失 / 核心计算。
 - 波次表默认仍为静态数组；`waves[].spawns[]` 已支持按种类精确指定数量、出生点 / 出生区域、生成延迟、生成间隔、攻击优先级与 Boss。战役可通过 `endless: true` 启用无尽波（由 `wave.js` 的 `_buildEndlessWave` 按公式动态生成，只改种类与数量，HP/伤害不动）；`spawns[].fromBuildings` 可从存活敌方建筑位置刷怪，建筑被摧毁后该点自动跳过。随机事件 / 动态增援机制仍无。
 - 地形仅背景网格，区域（`zones`）已支持占领与进出事件，但无阻挡格、无高低差、无寻路。
-- 敌人 AI 为直线追踪，无绕行与编队；已支持盾卫嘲讽与眩晕 / 减速状态。
+- 敌人 AI 为直线追踪，无绕行与编队；已支持盾卫被动 / 主动嘲讽与眩晕 / 减速状态。
+- 敌方群体减伤光环取范围内最大 `damageReduction` 单值，不做乘算堆叠；如需多层叠加需扩展 `damageEnemy` 入口。
+- 敌方召唤物 `lifetime` 到点直接 `destroy()`，不走 `_killEnemy`，不计入击杀统计、不给经验、不掉资源；如需计击杀需在 `combat.js` 召唤物清理分支改走 `_killEnemy`。
+- 敌方远程弹道命中判定为"距目标 24px 内"，无目标预测 / 无碰撞网格；目标死亡或消失时弹道直接销毁。
+- 友军主动技能目前只有 `stim` / `heal_burst` / `taunt_roar` 三种；新增技能需在 `combat.js` 的 `activateUnitAbility` 内加 `ab.id` 分支，并可在 `ui.js` 的 `_renderUnitSkills` 无需改动（按钮通用）。
+- 新增敌人若复用现有纹理，靠 `tint` 区分（如 `healer` 用 `tex_medic`、`warden` 用 `tex_shieldman`）；如需专属外观需在 `textures.js` 补纹理。
 - 敌方关键建筑（护盾发生器、要塞核心）仍复用 `tex_shield_gen`，但虫巢 / 地刺 / 孢子炮已有专属纹理。
 - `protect_target` 目标必须配合 `untilObjective` 或 `seconds` 才有意义，否则会开局即完成。
 - `minimap.js` 已按当前战役地图尺寸动态计算比例和点击映射；但小地图 canvas 内部坐标系固定为 140×140，若改 CSS 显示尺寸无需改代码，若改 canvas `width/height` 属性需同步更新 `minimap.js` 中的 140 常量。

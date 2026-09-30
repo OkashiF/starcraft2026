@@ -12,10 +12,10 @@ StarAbyss.CombatSystem = class {
     // ===== 伤害计算：armorType + bonusVs + mark =====
     computeDamage(baseDamage, attackerDef, target) {
         let mult = 1;
-        if (attackerDef && attackerDef.bonusVs && target.armorType) {
+        if (attackerDef && attackerDef.bonusVs && target && target.armorType) {
             mult *= attackerDef.bonusVs[target.armorType] || 1;
         }
-        if (target.status && target.status.markUntil > this.scene.time.now) {
+        if (target && target.status && target.status.markUntil > this.scene.time.now) {
             mult *= StarAbyss.Config.STATUS.MARK_MULT;
         }
         return Math.round(baseDamage * mult);
@@ -27,7 +27,7 @@ StarAbyss.CombatSystem = class {
         if (!s) return;
         const dt = delta / 1000;
 
-        // 护盾吸收
+        // 护盾到期
         if (s.shield > 0 && s.shieldUntil && time > s.shieldUntil) {
             s.shield = 0;
         }
@@ -40,8 +40,6 @@ StarAbyss.CombatSystem = class {
                 else this._killEnemy(entity);
             }
         }
-
-        // 眩晕 / 减速体现在移动逻辑里（enemyAI / 单位移动）
     }
 
     update(time, delta) {
@@ -63,6 +61,13 @@ StarAbyss.CombatSystem = class {
             }
 
             this._processStatus(unit, time, delta, true);
+
+            // 兴奋剂到期恢复
+            if (unit.stimUntil && time > unit.stimUntil) {
+                unit.stimUntil = 0;
+                unit.speed = unit.baseStats.speed;
+                unit.atkCooldown = unit.baseStats.atkCooldown;
+            }
 
             if (unit.starText) unit.starText.setPosition(unit.x, unit.y - 30);
 
@@ -174,7 +179,7 @@ StarAbyss.CombatSystem = class {
             if (!b.active) return;
             const def = StarAbyss.Config.BUILDINGS[b.bType];
             if (!def || !def.range || !def.damage) return;
-            if (def.supplyBonus) return; // 补给站不是炮塔
+            if (def.supplyBonus) return;
 
             let enemy = null, mDist = def.range;
             scene.enemyUnits.getChildren().forEach(e => {
@@ -219,6 +224,8 @@ StarAbyss.CombatSystem = class {
                 scene.projectiles.add(proj);
                 proj.damage = this.computeDamage(eb.damage, eb.defense || {}, target);
                 proj.enemyProjectile = true;
+                proj.hitTarget = target;
+                proj.targetType = 'unit';
                 scene.physics.moveToObject(proj, target, 450);
                 scene.time.delayedCall(700, () => { if (proj.active) proj.destroy(); });
             }
@@ -234,6 +241,67 @@ StarAbyss.CombatSystem = class {
                 const oy = (Math.random() - 0.5) * 60;
                 scene.unitFactory.spawnEnemy(eb.spawner.type, eb.x + ox, eb.y + oy, null, 'default');
             }
+        });
+
+        // ===== 敌方召唤物生命周期 =====
+        const expired = [];
+        scene.enemyUnits.getChildren().forEach(e => {
+            if (e.lifetime && time - e.spawnedAt > e.lifetime) expired.push(e);
+        });
+        expired.forEach(e => e.destroy());
+
+        // ===== 敌方投射物命中 =====
+        scene.projectiles.getChildren().forEach(proj => {
+            if (!proj.enemyProjectile || !proj.active) return;
+            const t = proj.hitTarget;
+            if (!t || !t.active || (t.hp !== undefined && t.hp <= 0)) {
+                proj.destroy();
+                return;
+            }
+            const d = Phaser.Math.Distance.Between(proj.x, proj.y, t.x, t.y);
+            if (d < 24) {
+                this._applyEnemyProjectileHit(proj, t);
+                proj.destroy();
+            }
+        });
+
+        // ===== 敌方治疗者 =====
+        scene.enemyUnits.getChildren().forEach(e => {
+            if (!e.active || !e.healer) return;
+            if (time < e.healer.lastHeal + e.healer.cooldown) return;
+            let target = null, lowPct = 1;
+            scene.enemyUnits.getChildren().forEach(o => {
+                if (!o.active || o === e || o.isEnemyBuilding) return;
+                if (o.hp >= o.maxHp) return;
+                const d = Phaser.Math.Distance.Between(e.x, e.y, o.x, o.y);
+                if (d > e.healer.range) return;
+                const pct = o.hp / o.maxHp;
+                if (pct < lowPct) { lowPct = pct; target = o; }
+            });
+            if (target) {
+                e.healer.lastHeal = time;
+                target.hp = Math.min(target.maxHp, target.hp + e.healer.amount);
+                scene.vfx.hitBurst(target.x, target.y, 0x66ff88, 4);
+            }
+        });
+
+        // ===== 敌方召唤者 =====
+        scene.enemyUnits.getChildren().forEach(e => {
+            if (!e.active || !e.summoner) return;
+            if (time < e.summoner.nextSummon) return;
+            e.summoner.nextSummon = time + e.summoner.interval;
+            for (let i = 0; i < e.summoner.count; i++) {
+                const ox = (Math.random() - 0.5) * 80;
+                const oy = (Math.random() - 0.5) * 80;
+                const spawned = scene.unitFactory.spawnEnemy(
+                    e.summoner.type, e.x + ox, e.y + oy, ['summoned'], 'default'
+                );
+                if (spawned) {
+                    spawned.lifetime = e.summoner.lifetime;
+                    spawned.spawnedAt = time;
+                }
+            }
+            scene.vfx.hitBurst(e.x, e.y, 0xaa44ff, 8);
         });
 
         // ===== 地雷阵 =====
@@ -277,6 +345,92 @@ StarAbyss.CombatSystem = class {
                 if (d < z.radius) u.hp = Math.min(u.maxHp, u.hp + heal);
             });
         });
+    }
+
+    _applyEnemyProjectileHit(proj, target) {
+        const scene = this.scene;
+        const time = scene.time.now;
+        const dmg = proj.damage || 0;
+
+        if (proj.targetType === 'unit') {
+            if (target.status && target.status.shield > 0 && target.status.shieldUntil > time) {
+                const absorbed = Math.min(target.status.shield, dmg);
+                target.status.shield -= absorbed;
+                const remaining = dmg - absorbed;
+                if (remaining > 0) {
+                    target.hp -= remaining;
+                    if (target.hp <= 0) this._killFriendly(target);
+                }
+            } else {
+                target.hp -= dmg;
+                if (target.hp <= 0) this._killFriendly(target);
+            }
+        } else if (proj.targetType === 'protect') {
+            this.damageBuilding(target, dmg, null);
+            if (proj.onHitAcid) {
+                this._acidZones.push({
+                    x: target.x, y: target.y,
+                    radius: proj.onHitAcid.radius, dps: proj.onHitAcid.dps,
+                    until: time + proj.onHitAcid.duration,
+                });
+            }
+        } else if (proj.targetType === 'base') {
+            this.damageBuilding(target, dmg, null);
+            StarAbyss.UI.flashDamage();
+        }
+        scene.vfx.hitBurst(proj.x, proj.y, 0xff2a6d, 4);
+    }
+
+    // ===== 友军主动技能 =====
+    activateUnitAbility() {
+        const scene = this.scene;
+        const time = scene.time.now;
+        if (!scene.selectedUnits || scene.selectedUnits.length === 0) {
+            StarAbyss.UI.showToast('请先选择单位');
+            return;
+        }
+        let activated = 0;
+        scene.selectedUnits.forEach(u => {
+            if (!u.active || !u.ability) return;
+            const ab = u.ability;
+            if (time < (ab.readyAt || 0)) return;
+
+            if (ab.id === 'stim') {
+                const hpCost = Math.max(1, Math.round(u.hp * ab.hpCostPct));
+                if (u.hp - hpCost <= 0) return;   // 避免自杀
+                u.hp -= hpCost;
+                u.stimUntil = time + ab.duration;
+                u.speed = u.baseStats.speed * ab.speedMult;
+                u.atkCooldown = u.baseStats.atkCooldown / ab.atkSpeedMult;
+                scene.vfx.hitBurst(u.x, u.y, 0xff8800, 6);
+            } else if (ab.id === 'heal_burst') {
+                scene.friendlyUnits.getChildren().forEach(o => {
+                    if (!o.active) return;
+                    const d = Phaser.Math.Distance.Between(u.x, u.y, o.x, o.y);
+                    if (d < ab.range) o.hp = Math.min(o.maxHp, o.hp + ab.amount);
+                });
+                scene.vfx.hitBurst(u.x, u.y, 0x00ff88, 12);
+            } else if (ab.id === 'taunt_roar') {
+                scene.enemyUnits.getChildren().forEach(e => {
+                    if (!e.active || e.isEnemyBuilding) return;
+                    const d = Phaser.Math.Distance.Between(u.x, u.y, e.x, e.y);
+                    if (d < ab.range) {
+                        e.tauntedBy = u;
+                        e.tauntUntil = time + ab.duration;
+                    }
+                });
+                scene.vfx.hitBurst(u.x, u.y, 0xffdd00, 12);
+            }
+            ab.readyAt = time + ab.cooldown;
+            activated++;
+        });
+        if (activated > 0) {
+            StarAbyss.audio.playClick();
+            StarAbyss.UI.updateSelectionCard(scene);
+        } else {
+            StarAbyss.UI.showToast('技能冷却中或未选中可用单位');
+            StarAbyss.audio.playAlarm();
+        }
     }
 
     _moveToTarget(unit, speedMult = 1) {
@@ -324,8 +478,6 @@ StarAbyss.CombatSystem = class {
         if (!proj.active) return;
         const dmg = proj.damage || 0;
         const splash = proj.splashRadius || 0;
-        const casterDef = proj.casterDef;
-        const ownerUnit = proj.ownerUnit;
         const px = proj.x, py = proj.y;
         proj.destroy();
 
@@ -343,8 +495,18 @@ StarAbyss.CombatSystem = class {
     }
 
     damageEnemy(enemy, amount) {
-        const scene = this.scene;
         if (!enemy.active) return;
+
+        // 群体减伤光环
+        let reduction = 0;
+        this.scene.enemyUnits.getChildren().forEach(e => {
+            if (!e.active || !e.aura) return;
+            const d = Phaser.Math.Distance.Between(e.x, e.y, enemy.x, enemy.y);
+            if (d < e.aura.radius) reduction = Math.max(reduction, e.aura.damageReduction);
+        });
+        if (reduction > 0) amount = Math.round(amount * (1 - reduction));
+
+        const scene = this.scene;
         const time = scene.time.now;
 
         // 护盾优先吸收
@@ -379,7 +541,6 @@ StarAbyss.CombatSystem = class {
         if (def.deathExplosion) {
             const ex = def.deathExplosion;
             scene.vfx.deathBurst(enemy.x, enemy.y, 0xffb703, 20);
-            // 对友军造成伤害
             scene.friendlyUnits.getChildren().forEach(u => {
                 if (!u.active) return;
                 const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, u.x, u.y);
@@ -388,7 +549,6 @@ StarAbyss.CombatSystem = class {
                     if (u.hp <= 0) this._killFriendly(u);
                 }
             });
-            // 对建筑额外伤害
             scene.friendlyBuildings.getChildren().forEach(b => {
                 if (!b.active) return;
                 const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, b.x, b.y);
@@ -449,12 +609,10 @@ StarAbyss.CombatSystem = class {
         StarAbyss.UI.updateUI();
     }
 
-    // 敌人攻击保护目标/友方建筑时调用
     damageBuilding(building, amount, attacker) {
         if (!building || !building.active) return;
         const time = this.scene.time.now;
 
-        // 护盾
         if (building.status && building.status.shield > 0 && building.status.shieldUntil > time) {
             const absorbed = Math.min(building.status.shield, amount);
             building.status.shield -= absorbed;
