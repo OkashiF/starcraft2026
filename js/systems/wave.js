@@ -56,7 +56,13 @@ StarAbyss.WaveSystem = class {
         if (!campaign) return;
 
         const waveIdx = S.wave - 1;
-        const waveCfg = campaign.waves && campaign.waves[waveIdx];
+        let waveCfg = campaign.waves && campaign.waves[waveIdx];
+
+        // ★ 新增：无尽波分支
+        // 静态 waves[] 用完后，如果战役声明了 endless: true，则动态生成
+        if (!waveCfg && campaign.endless) {
+            waveCfg = this._buildEndlessWave(campaign, S.wave);
+        }
 
         if (!waveCfg) {
             S.waveTimer = 9999;
@@ -84,7 +90,15 @@ StarAbyss.WaveSystem = class {
                 scene.time.delayedCall(spawnDelay, () => {
                     if (S.isGameOver) return;
 
-                    const pos = this._resolveSpawnPosition(spec, campaign);
+                    // ★ 新增：从存活敌方建筑刷怪；无建筑则跳过该个体
+                    let pos;
+                    if (spec.fromBuildings) {
+                        pos = this._resolveSpawnFromBuilding(spec.fromBuildings, i);
+                        if (!pos) return;
+                    } else {
+                        pos = this._resolveSpawnPosition(spec, campaign);
+                    }
+
                     const enemy = scene.unitFactory.spawnEnemy(
                         spec.type,
                         pos.x,
@@ -107,6 +121,89 @@ StarAbyss.WaveSystem = class {
         S.waveTimer = waveCfg.interval;
         S.wave++;
         this._waveTriggered++;
+    }
+
+    // ============================================================
+    // ★ 新增：无尽波生成器（通用，任何战役加 endless: true 即可用）
+    // 只改种类与数量；HP / 伤害完全不动。
+    // 每项 count 是「每个存活建筑生成的数量」，全图总数 = count × 存活建筑数。
+    // ============================================================
+    _buildEndlessWave(campaign, wave) {
+        const spawns = [];
+        const push = (type, count, extra) => {
+            if (count > 0) spawns.push(Object.assign({
+                type,
+                count,
+                fromBuildings: true,
+            }, extra || {}));
+        };
+
+        // 打底：每建筑 1 只迅猛虫，全程都有
+        push('zergling', 1);
+
+        // 第 2 波起：刺蛇（远程）
+        if (wave >= 2) push('hydralisk', Math.min(3, Math.floor(wave / 3)));
+
+        // 第 5 波起：裂解虫（自杀式）
+        if (wave >= 5) push('reaper', Math.min(2, Math.floor((wave - 3) / 4)));
+
+        // 第 6 波起：飞刺（高速）
+        if (wave >= 6) push('flier', Math.min(2, Math.floor((wave - 4) / 4)));
+
+        // 第 7 波起：噬星巨兽（精英重型）
+        if (wave >= 7) push('ultralisk', Math.min(2, Math.floor((wave - 5) / 3)));
+
+        // 第 9 波起：酸蚀者（远程酸液）
+        if (wave >= 9) push('acidspitter', Math.min(1, Math.floor((wave - 7) / 4)));
+
+        // 第 12 波起：晶刺兽（精英重甲）
+        if (wave >= 12) push('crystalspike', Math.min(1, Math.floor((wave - 10) / 4)));
+
+        // 第 10 波起：Boss（每 5 波 +1）
+        if (wave >= 10) {
+            push('ultralisk', 1 + Math.floor((wave - 10) / 5), { boss: true });
+        }
+
+        return { interval: 15, spawns };
+    }
+
+    // ============================================================
+    // ★ 新增：从存活敌方建筑位置解析出生点（通用）
+    // tagFilter: true / null 表示任意敌方建筑；字符串表示只取带该 tag 的
+    // index: 用于在存活建筑之间轮询，实现「均匀分布」
+    // ============================================================
+    _resolveSpawnFromBuilding(tagFilter, index) {
+        const buildings = this._getAliveEnemyBuildings(tagFilter);
+        if (buildings.length === 0) return null;
+
+        // 轮询：i=0 → 第 0 座，i=1 → 第 1 座 … i=N → 回到第 0 座
+        const b = buildings[index % buildings.length];
+
+        // 建筑附近圆形随机偏移，避免所有敌人重叠在同一点
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 50 + Math.random() * 40;
+
+        return {
+            x: b.x + Math.cos(angle) * dist,
+            y: b.y + Math.sin(angle) * dist,
+        };
+    }
+
+    // ============================================================
+    // ★ 新增：实时查询存活的敌方建筑（通用）
+    // 每次调用都重新过滤，所以建筑中途被摧毁后，后续个体自动跳过该点
+    // ============================================================
+    _getAliveEnemyBuildings(tagFilter) {
+        return this.scene.enemyUnits.getChildren().filter(e => {
+            if (!e.isEnemyBuilding) return false;
+            if (!e.active) return false;
+            if (e.hp <= 0) return false;
+            if (!tagFilter || tagFilter === true) return true;
+
+            // entities.js 中 spawnEnemyBuilding 把 cfg.tags 存入 e.tags
+            const t = e.tags;
+            return Array.isArray(t) && t.includes(tagFilter);
+        });
     }
 
     _resolveSpawnPosition(spec, campaign) {

@@ -240,7 +240,6 @@ StarAbyss.Campaigns = {
             { type: 'tank',   dx: -60, dy: 140 },
         ],
 
-        // 刷怪较缓，主要靠要塞本身
         waves: [
             {
                 interval: 90,
@@ -277,9 +276,9 @@ StarAbyss.Campaigns = {
         ],
 
         enemyBuildings: [
-            { id: 'shield_gen_1', type: 'shield_gen', x: 1600, y: 1000, hp: 900,  tags: ['shield_gen'],    label: '护盾发生器 1' },
-            { id: 'shield_gen_2', type: 'shield_gen', x: 2000, y: 1400, hp: 900,  tags: ['shield_gen'],    label: '护盾发生器 2' },
-            { id: 'fortress_core', type: 'fortress_core', x: 1800, y: 1200, hp: 1800, tags: ['fortress_core'], label: '要塞核心' },
+            { id: 'shield_gen_1', type: 'shield_gen', x: 1600, y: 1000, hp: 1600,  tags: ['shield_gen'],    label: '护盾发生器 A' },
+            { id: 'shield_gen_2', type: 'shield_gen', x: 2000, y: 1400, hp: 1600,  tags: ['shield_gen'],    label: '护盾发生器 B' },
+            { id: 'fortress_core', type: 'fortress_core', x: 1800, y: 1200, hp: 3800, tags: ['fortress_core'], label: '要塞核心' },
         ],
 
         objectives: [
@@ -289,7 +288,7 @@ StarAbyss.Campaigns = {
 
         failConditions: [
             { type: 'base_destroyed', reason: '指挥中心被摧毁' },
-            { type: 'timeout', params: { seconds: 720 }, reason: '敌方增援已抵达，攻坚失败' },
+            { type: 'timeout', params: { seconds: 720 }, reason: '敌方增援已抵达，任务失败' },
         ],
 
         rewards: { coresPerWin: 6 },
@@ -301,7 +300,6 @@ StarAbyss.Campaigns = {
             { trigger: { type: 'onStart' }, dialogue: 'fortress_intro' },
             { trigger: { type: 'onObjectiveComplete', objectiveId: 'shield' }, dialogue: 'fortress_shield_down' },
         ],
-
     },
 
     // ===== 保护/护送 =====
@@ -339,7 +337,6 @@ StarAbyss.Campaigns = {
             { type: 'tank',   dx: -60, dy: 140 },
         ],
 
-        // 车队：W 形路线，途经 3 处难民营，每处停留 10 秒
         convoy: {
             count: 3,
             startX: 500,
@@ -359,7 +356,6 @@ StarAbyss.Campaigns = {
             { id: 'exit_gate', shape: 'circle', x: 2100, y: 1200, r: 160, label: '星门撤离区', color: 0x00ff88 },
         ],
 
-        // 护送关：所有波次均让敌人主动追击车队
         waves: [
             {
                 interval: 10,
@@ -437,7 +433,7 @@ StarAbyss.Campaigns = {
         subtitle: '方舟信标防卫圈',
         briefing:
             '<strong>目标：</strong> 保护【方舟信标】不被摧毁。<br><br>' +
-            '坚守 8 波或 12 分钟，等待方舟援军抵达。<br><br>' +
+            '坚守，等待方舟援军抵达。<br><br>' +
             '<span style="color: var(--accent);">⚠️ 方舟信标是唯一联络手段，一旦被摧毁，全任务失败。</span>',
 
         unlock: { type: 'campaign', requires: 'convoy_escort' },
@@ -460,7 +456,6 @@ StarAbyss.Campaigns = {
             },
         },
 
-        // 信标建筑由场景根据 protectTarget 生成
         protectTargets: [
             { id: 'beacon_main', type: 'beacon', x: 1200, y: 900, label: '方舟信标' },
         ],
@@ -474,7 +469,6 @@ StarAbyss.Campaigns = {
             { type: 'tank',    dx: 80,  dy: 140 },
         ],
 
-        // 坚守关：前 3 波普通索敌，第 4 波起敌人主动扑向信标
         waves: [
             {
                 interval: 45,
@@ -557,6 +551,76 @@ StarAbyss.Campaigns = {
             { trigger: { type: 'onStart' }, dialogue: 'hold_intro' },
             { trigger: { type: 'onWave', wave: 5 }, dialogue: 'hold_wave5' },
             { trigger: { type: 'onWave', wave: 8 }, dialogue: 'hold_final' },
+        ],
+    },
+
+    // ===== 新增：无尽攻坚 =====
+    abyss_purge: {
+        id: 'abyss_purge',
+        name: '星渊清算',
+        subtitle: '12 座虫巢节点',
+        briefing:
+            '<strong>目标：</strong> 星渊深处潜伏着 12 座虫巢节点。<br><br>' +
+            '它们会持续不断地涌出敌人——每摧毁一座节点，虫潮便削弱一分。<br><br>' +
+            '<span style="color: var(--accent);">⚠️ 虫潮没有尽头。第 10 波起会出现首领级异虫。</span><br>' +
+            '<span style="color: var(--accent);">⚠️ 指挥中心一旦沦陷，全任务失败。</span>',
+
+        unlock: { type: 'campaign', requires: 'hold_the_line' },
+
+        map: {
+            width: 4800, height: 4800,
+            base:  { x: 2400, y: 4400 },
+            depot: { x: 2280, y: 4400 },
+            nodes: [],
+        },
+
+        start: { minerals: 500, gas: 200, maxSupply: 30, waveTimer: 30 },
+
+        initialUnits: [
+            { type: 'marine', dx: 0,   dy: 120 },
+            { type: 'marine', dx: 40,  dy: 120 },
+            { type: 'marine', dx: -40, dy: 120 },
+            { type: 'tank',   dx: 80,  dy: 140 },
+        ],
+
+        // 无尽波：waves 为空，由 wave.js 的 _buildEndlessWave 动态生成
+        endless: true,
+        waves: [],
+
+        // 12 座敌方建筑：均匀分布在地图上半部，HP 由近到远逐步升高
+        enemyBuildings: [
+            // 近排（低 HP，地刺，距基地最近）
+            { id: 'node_01', type: 'spike', x: 800,  y: 2900, hp: 1400, tags: ['assault_node'], label: '地刺节点 1'  },
+            { id: 'node_02', type: 'spike', x: 1800, y: 3000, hp: 1500, tags: ['assault_node'], label: '地刺节点 2'  },
+            { id: 'node_03', type: 'spike', x: 3000, y: 3000, hp: 1500, tags: ['assault_node'], label: '地刺节点 3'  },
+            { id: 'node_04', type: 'spike', x: 4000, y: 2900, hp: 1400, tags: ['assault_node'], label: '地刺节点 4'  },
+            // 中排（中 HP，孢子炮）
+            { id: 'node_05', type: 'spore', x: 500,  y: 1900, hp: 2000, tags: ['assault_node'], label: '孢子炮节点 5' },
+            { id: 'node_06', type: 'spore', x: 1500, y: 1800, hp: 2100, tags: ['assault_node'], label: '孢子炮节点 6' },
+            { id: 'node_07', type: 'spore', x: 3300, y: 1800, hp: 2100, tags: ['assault_node'], label: '孢子炮节点 7' },
+            { id: 'node_08', type: 'spore', x: 4300, y: 1900, hp: 2000, tags: ['assault_node'], label: '孢子炮节点 8' },
+            // 远排（高 HP，孢子炮，距基地最远）
+            { id: 'node_09', type: 'spore', x: 700,  y: 800,  hp: 2500, tags: ['assault_node'], label: '孢子炮节点 9'  },
+            { id: 'node_10', type: 'spore', x: 1700, y: 700,  hp: 2600, tags: ['assault_node'], label: '孢子炮节点 10' },
+            { id: 'node_11', type: 'spore', x: 3100, y: 700,  hp: 2600, tags: ['assault_node'], label: '孢子炮节点 11' },
+            { id: 'node_12', type: 'spore', x: 4100, y: 800,  hp: 2500, tags: ['assault_node'], label: '孢子炮节点 12' },
+        ],
+
+        objectives: [
+            { id: 'purge', type: 'destroy_target', tag: 'assault_node', count: 12, label: '摧毁全部 12 座虫巢节点', required: true },
+        ],
+
+        failConditions: [
+            { type: 'base_destroyed', reason: '指挥中心被摧毁' },
+        ],
+
+        rewards: { coresPerWin: 8 },
+
+        victoryText: '12 座节点全部灰飞烟灭，虫潮终于平息。',
+        defeatText: '指挥中心沦陷，虫潮吞没了这颗星球……',
+
+        scripts: [
+            { trigger: { type: 'onStart' }, dialogue: 'abyss_purge_intro' },
         ],
     },
 };
